@@ -1,0 +1,16 @@
+Analyzing my_app...                                             
+
+warning - The asset directory 'assets/images/' doesn't exist - lib\backups\precheckout-20251119214519\pubspec.yaml:63:7 - asset_directory_does_not_exist
+  error - Directives must appear before any declarations - lib\firebase_options.dart:17:1 - directive_after_declaration
+  error - The name 'DefaultFirebaseOptions' is already defined - lib\firebase_options.dart:19:7 - duplicate_definition
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:4:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:13:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:81:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:93:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:105:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\image_pages.dart:114:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\main.dart:55:49 - deprecated_member_use
+warning - A value for optional parameter 'key' isn't ever given - lib\main.dart:412:25 - unused_element_parameter
+   info - Parameter 'key' could be a super parameter - lib\test_list_page.dart:5:9 - use_super_parameters
+
+12 issues found. (ran in 1.7s)

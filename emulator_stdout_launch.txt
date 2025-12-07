@@ -1,0 +1,33 @@
+INFO         | Android emulator version 35.4.9.0 (build_id 13025442) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\
+WARNING      | Please update the emulator to one that supports the feature(s): VulkanVirtualQueue
+INFO         | IPv4 server found: 168.95.1.1
+INFO         | Ignore IPv6 address: ba:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: ba:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: ba:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: d8bf:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: d8bf:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: d8bf:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: c8c5:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: c8c5:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: c8c5:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: c0cb:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: 10d4:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: 10d4:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: 10d4:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: f8d9:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: f8d9:d332:3d02:0:ba:d332:3d02:0
+INFO         | Ignore IPv6 address: f8d9:d332:3d02:0:ba:d332:3d02:0
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+INFO         |      Ok: Hypervisor compatibility to run avd: `Pixel_3a` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Ok: System requirements to run avd: `Pixel_3a` are met
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Pixel_3a` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Pixel_3a` are met
+ERROR        | Running multiple emulators with the same AVD 
+ERROR        | is an experimental feature.
+ERROR        | Please use -read-only flag to enable this feature.

@@ -1,0 +1,87 @@
+INFO         | Android emulator version 35.4.9.0 (build_id 13025442) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+DEBUG   | Current emulator version 35.4.9 is the same as the required version 35.4.9.
+INFO         | Found AVD name 'Pixel_3a'
+INFO         | Found AVD target architecture: x86_64
+INFO         | argv[0]: 'C:\Users\USER\AppData\Local\Android\Sdk\emulator\emulator.exe'; program directory: 'C:\Users\USER\AppData\Local\Android\Sdk\emulator'
+INFO         | Found systemPath C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\
+DEBUG   | autoconfig: -skin pixel_3a
+DEBUG   | autoconfig: -skindir C:\Users\USER\AppData\Local\Android\Sdk\skins\
+WARNING      | Please update the emulator to one that supports the feature(s): VulkanVirtualQueue
+DEBUG   | querying file version info API...
+DEBUG   | found kernelbase.dll
+DEBUG   | GetFileVersionInfoSizeW found. On Windows 10?
+DEBUG   | GetFileVersionInfoW found. On Windows 10?
+DEBUG   | VerQueryValueW found. Can query file versions
+DEBUG   | queryFileVersionInfo: path not found: amdvlk64.dll
+DEBUG   | querying file version info API...
+DEBUG   | queryFileVersionInfo: path not found: amdvlk32.dll
+DEBUG   | querying file version info API...
+DEBUG   | autoconfig: -kernel C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\\kernel-ranchu
+DEBUG   | Target arch = 'x86_64'
+DEBUG   | Auto-detect: Kernel image requires new device naming scheme.
+DEBUG   | Auto-detect: Kernel does not support YAFFS2 partitions.
+DEBUG   | autoconfig: -ramdisk C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\\ramdisk.img
+DEBUG   | Using initial system image: C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\\system.img
+DEBUG   | Using initial vendor image: C:\Users\USER\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\\vendor.img
+DEBUG   | autoconfig: -data C:\Users\USER\.android\avd\..\avd\Pixel_3a.avd\userdata-qemu.img
+DEBUG   | autoconfig: -initdata (null)
+DEBUG   | autoconfig: -cache C:\Users\USER\.android\avd\..\avd\Pixel_3a.avd\cache.img
+DEBUG   | autoconfig: -sdcard C:\Users\USER\.android\avd\..\avd\Pixel_3a.avd\sdcard.img
+DEBUG   | Physical RAM size: 2048MB
+DEBUG   | VM heap size 256MB is below hardware specified minimum of 512MB,setting it to that value
+DEBUG   | System image is read only
+INFO         | IPv4 server found: 168.95.1.1
+INFO         | Ignore IPv6 address: 5046:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 5046:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 5046:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 284c:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 284c:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 284c:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 1852:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 1852:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 1852:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 1058:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 6060:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 6060:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 6060:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 4866:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 4866:a9ec:bc01:0:5046:a9ec:bc01:0
+INFO         | Ignore IPv6 address: 4866:a9ec:bc01:0:5046:a9ec:bc01:0
+DEBUG   | Found 1 DNS servers:
+DEBUG   | 	168.95.1.1
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasCompatibleHypervisor
+DEBUG   | Checking whether Windows Hypervisor Platform (WHPX) is available.
+DEBUG   | WinHvPlatform.dll found. Looking for WHvGetCapability...
+DEBUG   | WHvGetCapability found. Querying WHPX capabilities...
+DEBUG   | WHPX (10.0.26100) is installed and usable.
+INFO         |      Ok: Hypervisor compatibility to run avd: `Pixel_3a` are met
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Ok: System requirements to run avd: `Pixel_3a` are met
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Pixel_3a` are passed
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Pixel_3a` are met
+DEBUG   | Starting hostapd main loop.
+ERROR        | Running multiple emulators with the same AVD 
+ERROR        | is an experimental feature.
+ERROR        | Please use -read-only flag to enable this feature.
+INFO         | emuDirName: 'C:\Users\USER\AppData\Local\Android\Sdk\emulator'
+INFO         | try dir C:\Users\USER\AppData\Local\Android\Sdk\emulator
+INFO         | Trying emulator path 'C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe'
+INFO         | Found target-specific 64-bit emulator binary: C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe
+INFO         | Adding library search path: 'C:\Users\USER\AppData\Local\Android\Sdk\emulator\lib64'
+INFO         | Adding library search path: 'C:\Users\USER\AppData\Local\Android\Sdk\emulator\lib64\gles_swiftshader'
+INFO         | Quoted param: [C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe]
+INFO         | Quoted param: [-avd]
+INFO         | Quoted param: [Pixel_3a]
+INFO         | Quoted param: [-no-snapshot-load]
+INFO         | Quoted param: [-verbose]
+DEBUG   | emulator: Running :C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe
+DEBUG   | qemu backend: argv[00] = "C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe"
+DEBUG   | qemu backend: argv[01] = "-avd"
+DEBUG   | qemu backend: argv[02] = "Pixel_3a"
+DEBUG   | qemu backend: argv[03] = "-no-snapshot-load"
+DEBUG   | qemu backend: argv[04] = "-verbose"
+DEBUG   | Concatenated backend parameters:  C:\Users\USER\AppData\Local\Android\Sdk\emulator\qemu\windows-x86_64\qemu-system-x86_64.exe -avd Pixel_3a -no-snapshot-load -verbose

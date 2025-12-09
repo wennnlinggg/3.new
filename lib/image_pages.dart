@@ -1,717 +1,90 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'notifications_page.dart';
+import 'recommendation_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return _LayoutMock(title: 'Home');
-  }
-}
+    final gradient = LinearGradient(
+      colors: [Colors.green.shade100, Colors.green.shade50.withAlpha(153)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
 
-class EnergyPage extends StatelessWidget {
-  const EnergyPage({Key? key}) : super(key: key);
+    Widget imageCard(String title, Color color, {String? assetName, VoidCallback? onTap}) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // image area
+              Container(
+                height: 180,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: assetName != null
+                      ? Image.asset(
+                          'assets/images/$assetName',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(color: color),
+                        )
+                      : Container(color: color),
+                ),
+              ),
 
-  @override
-  Widget build(BuildContext context) {
+              // title bar under the image
+              Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                alignment: Alignment.centerLeft,
+                child: Text(title, style: const TextStyle(color: Colors.black87, fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.grey[50],
-        body: Column(
-          children: [
-            const SizedBox(height: 8),
-            // Top row: notification (left), title (center), add button (right)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Row(
-                children: [
-                  // notification
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsPage())),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text('Eco Plug', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.green)),
-                    ),
-                  ),
-                  // add button with popup menu
-                  PopupMenuButton<String>(
-                    onSelected: (v) {
-                      if (v == 'add') {
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddDevicePage()));
-                      }
-                    },
-                    itemBuilder: (context) => [const PopupMenuItem(value: 'add', child: Text('Add Device'))],
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black12)),
-                      child: const Icon(Icons.add, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-
-            // main content: large centered image (energy icon or placeholder)
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: GestureDetector(
-                    onTap: () => _showRoomsModal(context),
-                    child: Image.asset(
-                      'assets/images/energy.png',
-                      width: 240,
-                      height: 240,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.bolt, size: 140, color: Colors.green),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showRoomsModal(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 6,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(3)),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _RoomCard(title: 'Dining Room', icon: Icons.chair, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Dining Room')))),
-                  _RoomCard(title: 'Bathroom', icon: Icons.bathtub, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Bathroom')))),
-                  _RoomCard(title: 'Kitchen', icon: Icons.kitchen, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Kitchen')))),
-                ],
-              ),
-              const SizedBox(height: 18),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RoomCard extends StatelessWidget {
-  const _RoomCard({required this.title, required this.icon, required this.onTap});
-  final String title;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pop();
-        onTap();
-      },
-      child: Material(
-        color: Colors.white,
-        elevation: 2,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 100,
-          height: 110,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(radius: 26, backgroundColor: Colors.grey[50], child: Icon(icon, color: Colors.green, size: 28)),
-              const SizedBox(height: 10),
-              Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class RoomPage extends StatelessWidget {
-  const RoomPage({required this.name, Key? key}) : super(key: key);
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    // sample devices for Kitchen template
-    // Prefer local assets (assets/images/a.png..d.png) for consistent screenshots
-    final devices = [
-      {'name': 'Blender', 'asset': 'assets/images/blender.png', 'image': 'assets/images/blender.png'},
-      {'name': 'Toaster', 'asset': 'assets/images/toaster.png', 'image': 'assets/images/toaster.png'},
-      {'name': 'Oven', 'asset': 'assets/images/oven.png', 'image': 'assets/images/oven.png'},
-      {'name': 'Dishwasher', 'asset': 'assets/images/dishwasher.png', 'image': 'assets/images/dishwasher.png'},
-    ];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF4),
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: Text(name),
-        actions: [
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        foregroundColor: Colors.black,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: GridView.count(
-          crossAxisCount: 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 18,
-          childAspectRatio: 0.75,
-          children: devices.map((d) {
-            return GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeviceDetailPage(name: d['name']!, asset: d['asset'] as String?, imageUrl: d['image']!))),
-              child: _DeviceCard(name: d['name']!, asset: d['asset'] as String?, imageUrl: d['image']!),
-            );
-          }).toList(),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFFBFF2C9),
-        foregroundColor: Colors.black,
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-}
-
-class _DeviceCard extends StatelessWidget {
-  const _DeviceCard({required this.name, required this.imageUrl, this.asset, Key? key}) : super(key: key);
-  final String name;
-  final String imageUrl;
-  final String? asset;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Material(
-          color: Colors.white,
-          elevation: 2,
-          borderRadius: BorderRadius.circular(14),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 88,
-              width: double.infinity,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Center(
-                  child: ClipOval(
-                    child: _buildImageWidget(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(name, style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    );
-  }
-
-  Widget _buildImageWidget() {
-    // prefer explicit asset if provided
-    if (asset != null && asset!.isNotEmpty) {
-      return Image.asset(
-        asset!,
-        width: 64,
-        height: 64,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _networkFallback(),
-      );
-    }
-
-    // if imageUrl looks like network, use network
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: 64,
-        height: 64,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 64,
-          height: 64,
-          color: Colors.grey[200],
-          child: const Icon(Icons.kitchen, color: Colors.grey),
-        ),
-      );
-    }
-
-    // otherwise treat imageUrl as asset path
-    return Image.asset(
-      imageUrl,
-      width: 64,
-      height: 64,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _networkFallback(),
-    );
-  }
-
-  Widget _networkFallback() {
-    return Container(
-      width: 64,
-      height: 64,
-      color: Colors.grey[200],
-      child: const Icon(Icons.kitchen, color: Colors.grey),
-    );
-  }
-}
-
-class DeviceDetailPage extends StatefulWidget {
-  const DeviceDetailPage({required this.name, this.asset, required this.imageUrl, Key? key}) : super(key: key);
-  final String name;
-  final String? asset;
-  final String imageUrl;
-
-  @override
-  State<DeviceDetailPage> createState() => _DeviceDetailPageState();
-}
-
-class _DeviceDetailPageState extends State<DeviceDetailPage> {
-  bool _isOn = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedPowerState();
-  }
-
-  void _togglePower() {
-    setState(() {
-      _isOn = !_isOn;
-    });
-    _savePowerState();
-  }
-
-  String _prefsKey() => 'device_power_${widget.name.replaceAll(' ', '_').toLowerCase()}';
-
-  Future<void> _loadSavedPowerState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final val = prefs.getBool(_prefsKey());
-      if (val != null) {
-        setState(() => _isOn = val);
-      }
-    } catch (_) {
-      // ignore errors; default _isOn stays false
-    }
-  }
-
-  Future<void> _savePowerState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefsKey(), _isOn);
-    } catch (_) {
-      // ignore
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final imageWidget = (widget.asset != null && widget.asset!.isNotEmpty)
-        ? Image.asset(widget.asset!, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.network(widget.imageUrl, width: 120, height: 120, fit: BoxFit.cover))
-        : Image.network(widget.imageUrl, width: 120, height: 120, fit: BoxFit.cover);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6FBF4),
-      appBar: AppBar(
-        title: Text(widget.name),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(12), child: imageWidget),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        const Text('Smart plug device', style: TextStyle(color: Colors.black54)),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: _togglePower,
-                              icon: const Icon(Icons.power_settings_new, color: Colors.white),
-                              label: Text(_isOn ? 'Turn Off' : 'Turn On'),
-                              style: ElevatedButton.styleFrom(backgroundColor: _isOn ? Colors.red : Colors.green),
-                            ),
-                            const SizedBox(width: 8),
-                            OutlinedButton(onPressed: () {}, child: const Text('Share')),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Power Statistics card (tappable)
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DevicePowerStatisticsPage(deviceName: widget.name))),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Power Statistics', style: TextStyle(fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: const [
-                                  _StatColumn(value: '0.2', unit: 'kWh', label: 'Electricity today'),
-                                  _StatColumn(value: '12.0', unit: 'w', label: 'Current power'),
-                                  _StatColumn(value: '2.0', unit: 'hours', label: 'Runtime today'),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Icon(Icons.chevron_right, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Power Source card
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
-                  child: Row(
-                    children: [
-                      // left: small device icon + label
-                      Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
-                            child: Center(child: Image.asset(widget.asset ?? widget.imageUrl, width: 36, height: 36, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.power))),
-                          ),
-                          const SizedBox(width: 12),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Power Source', style: TextStyle(fontWeight: FontWeight.w600)),
-                              SizedBox(height: 4),
-                              Text('Switch', style: TextStyle(color: Colors.black54)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      // big power button on right
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(color: _isOn ? Colors.red : Colors.green, shape: BoxShape.circle),
-                        child: IconButton(
-                          onPressed: _togglePower,
-                          icon: const Icon(Icons.power_settings_new, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // List options
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.schedule),
-                      title: const Text('Schedule'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SchedulePage())),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.flag),
-                      title: const Text('Goals'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalsPage())),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.eco),
-                      title: const Text('Carbon Emission'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.recommend),
-                      title: const Text('Recommendations'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.value, required this.unit, required this.label, Key? key}) : super(key: key);
-  final String value;
-  final String unit;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 6),
-              Text(unit, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-        ],
-      ),
-    );
-  }
-}
-
-class DevicePowerStatisticsPage extends StatefulWidget {
-  const DevicePowerStatisticsPage({required this.deviceName, Key? key}) : super(key: key);
-  final String deviceName;
-
-  @override
-  State<DevicePowerStatisticsPage> createState() => _DevicePowerStatisticsPageState();
-}
-
-class _DevicePowerStatisticsPageState extends State<DevicePowerStatisticsPage> {
-  int _selectedRange = 0; // 0: Week, 1: Month, 2: Year
-
-  Widget _buildTopStat(String value, String unit, String label) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-              const SizedBox(width: 6),
-              Text(unit, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Power Statistics'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: const Color(0xFFF6FBF4),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+        body: Container(
+          decoration: BoxDecoration(gradient: gradient),
+          child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.deviceName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 12),
-
-                // top two rows of stats (3 + 3)
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            _buildTopStat('0.2', 'kWh', 'Electricity today'),
-                            _buildTopStat('0.4', 'kWh', 'Electricity yesterday'),
-                            _buildTopStat('5.9', 'kWh', 'Electricity this month'),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _buildTopStat('12.0', 'w', 'Current power'),
-                            _buildTopStat('2.0', 'hours', 'Runtime today'),
-                            _buildTopStat('15.0', 'hours', 'Runtime this month'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-                // segmented control
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(3, (i) {
-                      final labels = ['Week', 'Month', 'Year'];
-                      final selected = _selectedRange == i;
-                      return GestureDetector(
-                        onTap: () => setState(() => _selectedRange = i),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            color: selected ? Colors.grey[200] : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(labels[i], style: TextStyle(color: selected ? Colors.black : Colors.black54, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-
                 const SizedBox(height: 8),
-                // date range selector
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.black54),
-                    const SizedBox(width: 8),
-                    const Text('04/25-05/01', style: TextStyle(color: Colors.black54)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                  ],
-                ),
-
+                Text('Eco Plug', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 28, color: Colors.green[900])),
                 const SizedBox(height: 12),
-                // chart card
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text('0.9 kWh', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                            Text('Total electricity', style: TextStyle(color: Colors.black54)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // chart placeholder with simple simulated line
-                        SizedBox(
-                          height: 180,
-                          child: Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.white),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-                                  child: CustomPaint(
-                                    painter: _SparklinePainter(),
-                                    child: Container(),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text('04/25', style: TextStyle(color: Colors.black54, fontSize: 12)),
-                            Text('05/01', style: TextStyle(color: Colors.black54, fontSize: 12)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                imageCard('Net Zero', Colors.pink.shade300, assetName: 'a.png', onTap: () => Navigator.of(context).pushNamed('/netzero')),
+                imageCard('Eco Plug', Colors.green.shade300, assetName: 'b.png', onTap: () => Navigator.of(context).pushNamed('/eco')),
+                imageCard('Tips & Tricks', Colors.blueGrey.shade300, assetName: 'd.png', onTap: () => Navigator.of(context).pushNamed('/tips')),
+                imageCard('Learn How You Can Help', Colors.teal.shade300, assetName: 'c.png', onTap: () => Navigator.of(context).pushNamed('/learn')),
                 const SizedBox(height: 24),
               ],
             ),
@@ -722,8 +95,90 @@ class _DevicePowerStatisticsPageState extends State<DevicePowerStatisticsPage> {
   }
 }
 
-class EnergyPage extends StatelessWidget {
+class EnergyPage extends StatefulWidget {
   const EnergyPage({Key? key}) : super(key: key);
+
+  @override
+  State<EnergyPage> createState() => _EnergyPageState();
+}
+
+class _EnergyPageState extends State<EnergyPage> {
+  Map<String, Map<String, String>> _roomsMap = {};
+  List<String> _roomOrder = [];
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRooms();
+  }
+
+  Future<void> _loadRooms() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('energy_rooms_map');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final decodedRaw = json.decode(jsonStr);
+        // support legacy format (direct map) and new format {'map': {...}, 'order': [...]}
+        if (decodedRaw is Map && decodedRaw.containsKey('map')) {
+          final decoded = Map<String, dynamic>.from(decodedRaw['map'] as Map);
+          final map = decoded.map((k, v) {
+            if (v is Map) {
+              return MapEntry(k, Map<String, String>.from(v.map((key, val) => MapEntry(key.toString(), val?.toString() ?? ''))));
+            }
+            return MapEntry(k, <String, String>{});
+          });
+          final orderRaw = decodedRaw['order'];
+          final orderList = orderRaw is List ? List<String>.from(orderRaw.map((e) => e.toString())) : map.keys.toList();
+          setState(() {
+            _roomsMap = map;
+            _roomOrder = orderList;
+          });
+        } else if (decodedRaw is Map) {
+          final decoded = Map<String, dynamic>.from(decodedRaw);
+          final map = decoded.map((k, v) {
+            if (v is Map) {
+              return MapEntry(k, Map<String, String>.from(v.map((key, val) => MapEntry(key.toString(), val?.toString() ?? ''))));
+            }
+            return MapEntry(k, <String, String>{});
+          });
+          setState(() {
+            _roomsMap = map;
+            _roomOrder = map.keys.toList();
+          });
+        }
+      }
+    } catch (_) {
+      // ignore errors
+    }
+  }
+
+  Future<void> _saveRooms() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // store both map and explicit order
+      final payload = {'map': _roomsMap, 'order': _roomOrder};
+      final jsonStr = json.encode(payload);
+      await prefs.setString('energy_rooms_map', jsonStr);
+    } catch (_) {}
+  }
+
+  void _onAddRoom() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(MaterialPageRoute(builder: (_) => const AddNewRoomPage()));
+    if (result != null) {
+      final room = (result['room'] as String?)?.trim();
+      final thing = (result['thing'] as String?)?.trim() ?? '';
+      final image = (result['image'] as String?) ?? '';
+      if (room != null && room.isNotEmpty) {
+        // update map and persist, maintain order
+        setState(() {
+          _roomsMap[room] = {'thing': thing, 'image': image};
+          if (!_roomOrder.contains(room)) _roomOrder.add(room);
+        });
+        await _saveRooms();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -748,14 +203,20 @@ class EnergyPage extends StatelessWidget {
                       child: Text('Eco Plug', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.green)),
                     ),
                   ),
-                  // add button with popup menu
+                  // small add/edit menu
                   PopupMenuButton<String>(
-                    onSelected: (v) {
+                    onSelected: (v) async {
                       if (v == 'add') {
                         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddDevicePage()));
+                      } else if (v == 'edit') {
+                        // toggle edit mode on/off
+                        setState(() => _editing = !_editing);
                       }
                     },
-                    itemBuilder: (context) => [const PopupMenuItem(value: 'add', child: Text('Add Device'))],
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'add', child: Text('Add Device')),
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    ],
                     child: Container(
                       width: 40,
                       height: 40,
@@ -768,121 +229,137 @@ class EnergyPage extends StatelessWidget {
             ),
             const Divider(height: 1),
 
-            // main content: large centered image (energy icon or placeholder)
+            // main content: either placeholder when empty (like Schedule) or grid of rooms
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: GestureDetector(
-                    onTap: () => _showRoomsModal(context),
-                    onLongPress: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NetZeroPage())),
-                    child: Image.asset(
-                      'assets/images/energy.png',
-                      width: 240,
-                      height: 240,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.bolt, size: 140, color: Colors.green),
+              child: _roomsMap.isEmpty ? _emptyPlaceholder() : _roomsGrid(),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _onAddRoom,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          child: const Icon(Icons.add),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        bottomNavigationBar: _editing
+            ? SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  color: Colors.white,
+                  child: Row(children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        onPressed: () async {
+                          setState(() => _editing = false);
+                          await _saveRooms();
+                        },
+                        child: const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Text('Done')),
+                      ),
                     ),
-                  ),
+                  ]),
                 ),
-              ),
-                          const SizedBox(height: 8),
-                          // top centered icon
-                          Center(
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 96,
-                                  height: 96,
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(child: Icon(Icons.eco, size: 56, color: Colors.green[700])),
-                                ),
-                                const SizedBox(height: 18),
-                              ],
-                            ),
-                          ),
+              )
+            : null,
+      ),
+    );
+  }
 
-                          // Field cards
-                          _fieldCard(icon: Icons.location_on, title: 'Location', subtitle: 'Kitchen'),
-                          _fieldCard(
-                            icon: Icons.add_circle_outline,
-                            title: 'Things',
-                            subtitle: 'Air Conditioner',
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(onPressed: () {}, icon: Icon(Icons.add, color: Colors.green[700])),
-                                const SizedBox(width: 6),
-                                Row(children: const [Icon(Icons.camera_alt, size: 18, color: Colors.green), SizedBox(width: 6), Text('Add Photo', style: TextStyle(color: Colors.green))]),
-                              ],
-                            ),
-                          ),
-                          _fieldCard(
-                            icon: Icons.devices, title: 'Device', subtitle: 'Wifi Smart Plug',
-                            trailing: const Icon(Icons.keyboard_arrow_down, color: Colors.black38),
-                          ),
-                          _fieldCard(icon: Icons.monetization_on_outlined, title: 'Costs', subtitle: ''),
-
-                          const SizedBox(height: 28),
-
-                          // Save button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green[600],
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Save Task', style: TextStyle(fontSize: 16)),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+  Widget _emptyPlaceholder() {
+    return SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.grey[100]),
+              child: const Center(child: Icon(Icons.bolt, size: 64, color: Colors.black26)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Nothing here yet', style: TextStyle(color: Colors.black54)),
+            const SizedBox(height: 8),
+            const Text('Tap + to add a new room', style: TextStyle(color: Colors.black45, fontSize: 12)),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
   }
 
-  void _showRoomsModal(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 6,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(3)),
+  Widget _roomsGrid() {
+    // when editing show a reorderable list
+    if (_editing) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: ReorderableListView(
+          onReorder: (oldIndex, newIndex) async {
+            if (newIndex > oldIndex) newIndex -= 1;
+            setState(() {
+              final item = _roomOrder.removeAt(oldIndex);
+              _roomOrder.insert(newIndex, item);
+            });
+            await _saveRooms();
+          },
+          children: List.generate(_roomOrder.length, (i) {
+            final r = _roomOrder[i];
+            final entry = _roomsMap[r] ?? {};
+            return ListTile(
+              key: ValueKey('room_$r'),
+              leading: const Icon(Icons.drag_handle),
+              title: Text(r),
+              subtitle: Text(entry['thing'] ?? ''),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () async {
+                  setState(() {
+                    _roomsMap.remove(r);
+                    _roomOrder.remove(r);
+                  });
+                  await _saveRooms();
+                },
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _RoomCard(title: 'Dining Room', icon: Icons.chair, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Dining Room')))),
-                  _RoomCard(title: 'Bathroom', icon: Icons.bathtub, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Bathroom')))),
-                  _RoomCard(title: 'Kitchen', icon: Icons.kitchen, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: 'Kitchen')))),
-                ],
+            );
+          }),
+        ),
+      );
+    }
+
+    // normal grid view when not editing
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: GridView.count(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 18,
+        childAspectRatio: 0.8,
+        children: _roomsMap.keys.map((r) {
+          final entry = _roomsMap[r];
+          Widget avatarChild = const Icon(Icons.kitchen, color: Colors.green, size: 28);
+
+          return GestureDetector(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RoomPage(name: r))),
+            child: Material(
+              color: Colors.white,
+              elevation: 2,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(radius: 26, backgroundColor: Colors.grey[50], child: avatarChild),
+                    const SizedBox(height: 10),
+                    Text(r, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13)),
+                  ],
+                ),
               ),
-              const SizedBox(height: 18),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
@@ -897,7 +374,6 @@ class _RoomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pop();
         onTap();
       },
       child: Material(
@@ -922,26 +398,79 @@ class _RoomCard extends StatelessWidget {
   }
 }
 
-class RoomPage extends StatelessWidget {
+class RoomPage extends StatefulWidget {
   const RoomPage({required this.name, Key? key}) : super(key: key);
   final String name;
 
   @override
-  Widget build(BuildContext context) {
-    // sample devices for Kitchen template
-    // Prefer local assets (assets/images/a.png..d.png) for consistent screenshots
-    final devices = [
-      {'name': 'Blender', 'asset': 'assets/images/blender.png', 'image': 'assets/images/blender.png'},
-      {'name': 'Toaster', 'asset': 'assets/images/toaster.png', 'image': 'assets/images/toaster.png'},
-      {'name': 'Oven', 'asset': 'assets/images/oven.png', 'image': 'assets/images/oven.png'},
-      {'name': 'Dishwasher', 'asset': 'assets/images/dishwasher.png', 'image': 'assets/images/dishwasher.png'},
-    ];
+  State<RoomPage> createState() => _RoomPageState();
+}
 
+class _RoomPageState extends State<RoomPage> {
+  List<Map<String, String>> devices = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDevices();
+  }
+
+  Future<void> _loadDevices() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('energy_rooms_map');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final decodedRaw = json.decode(jsonStr);
+
+        Map<String, dynamic>? roomsMap;
+
+        // Support both formats: either direct map {room: {thing,image}} or wrapper {'map': {...}, 'order': [...]}
+        if (decodedRaw is Map && decodedRaw.containsKey('map')) {
+          final mapPart = decodedRaw['map'];
+          if (mapPart is Map) roomsMap = Map<String, dynamic>.from(mapPart);
+        } else if (decodedRaw is Map<String, dynamic>) {
+          roomsMap = Map<String, dynamic>.from(decodedRaw);
+        }
+
+        if (roomsMap != null && roomsMap.containsKey(widget.name)) {
+          final entry = roomsMap[widget.name];
+          if (entry is Map) {
+            final thingName = (entry['thing'] as String?) ?? '';
+            final imagePath = (entry['image'] as String?) ?? '';
+            if (thingName.isNotEmpty) {
+              setState(() {
+                final slug = thingName.toLowerCase().replaceAll(' ', '_');
+                final asset = 'assets/images/$slug.png';
+                final image = imagePath.isNotEmpty ? imagePath : asset;
+                devices = [
+                  {'name': thingName, 'asset': asset, 'image': image},
+                ];
+              });
+              return;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // fallback sample devices
+    setState(() {
+      devices = [
+        {'name': 'Blender', 'asset': 'assets/images/blender.png', 'image': 'assets/images/blender.png'},
+        {'name': 'Toaster', 'asset': 'assets/images/toaster.png', 'image': 'assets/images/toaster.png'},
+        {'name': 'Oven', 'asset': 'assets/images/oven.png', 'image': 'assets/images/oven.png'},
+        {'name': 'Dishwasher', 'asset': 'assets/images/dishwasher.png', 'image': 'assets/images/dishwasher.png'},
+      ];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBF4),
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: Text(name),
+        title: Text(widget.name),
         actions: [
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
@@ -959,8 +488,8 @@ class RoomPage extends StatelessWidget {
           childAspectRatio: 0.75,
           children: devices.map((d) {
             return GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeviceDetailPage(name: d['name']!, asset: d['asset'] as String?, imageUrl: d['image']!))),
-              child: _DeviceCard(name: d['name']!, asset: d['asset'] as String?, imageUrl: d['image']!),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DeviceDetailPage(name: d['name']!, asset: d['asset'], imageUrl: d['image']!))),
+              child: _DeviceCard(name: d['name']!, asset: d['asset'], imageUrl: d['image']!),
             );
           }).toList(),
         ),
@@ -1015,41 +544,42 @@ class _DeviceCard extends StatelessWidget {
   }
 
   Widget _buildImageWidget() {
-    // prefer explicit asset if provided
-    if (asset != null && asset!.isNotEmpty) {
-      return Image.asset(
-        asset!,
-        width: 64,
-        height: 64,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _networkFallback(),
-      );
-    }
+    try {
+      if (imageUrl.isNotEmpty) {
+        // network image
+        if (imageUrl.startsWith('http')) {
+          return Image.network(
+            imageUrl,
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _networkFallback(),
+          );
+        }
 
-    // if imageUrl looks like network, use network
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: 64,
-        height: 64,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
+        // handle file:// URIs and local file paths
+        var path = imageUrl;
+        if (path.startsWith('file://')) path = path.replaceFirst('file://', '');
+        final file = File(path);
+        if (file.existsSync()) {
+          return Image.file(file, width: 64, height: 64, fit: BoxFit.cover);
+        }
+      }
+
+      // asset fallback
+      if (asset != null && asset!.isNotEmpty) {
+        return Image.asset(
+          asset!,
           width: 64,
           height: 64,
-          color: Colors.grey[200],
-          child: const Icon(Icons.kitchen, color: Colors.grey),
-        ),
-      );
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _networkFallback(),
+        );
+      }
+    } catch (_) {
+      // ignore and fall through to fallback
     }
-
-    // otherwise treat imageUrl as asset path
-    return Image.asset(
-      imageUrl,
-      width: 64,
-      height: 64,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _networkFallback(),
-    );
+    return _networkFallback();
   }
 
   Widget _networkFallback() {
@@ -1113,9 +643,19 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final imageWidget = (widget.asset != null && widget.asset!.isNotEmpty)
-        ? Image.asset(widget.asset!, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Image.network(widget.imageUrl, width: 120, height: 120, fit: BoxFit.cover))
-        : Image.network(widget.imageUrl, width: 120, height: 120, fit: BoxFit.cover);
+    Widget imageWidget;
+    // Use fixed smartplug asset for device detail image per request
+    try {
+      imageWidget = Image.asset(
+        'assets/images/smartplug.png',
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _detailImageFallback(widget.imageUrl),
+      );
+    } catch (_) {
+      imageWidget = _detailImageFallback(widget.imageUrl);
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6FBF4),
@@ -1216,7 +756,7 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
-                            child: Center(child: Image.asset(widget.asset ?? widget.imageUrl, width: 36, height: 36, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.power))),
+                            child: Center(child: Image.asset('assets/images/smartplug.png', width: 36, height: 36, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.power))),
                           ),
                           const SizedBox(width: 12),
                           const Column(
@@ -1269,13 +809,15 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
                       leading: const Icon(Icons.eco),
                       title: const Text('Carbon Emission'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        // estimate watts (example): Blender ~100W, otherwise 50W
-                        final est = widget.name.toLowerCase().contains('blender') ? 100.0 : 50.0;
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => CarbonEmissionPage(deviceName: widget.name, watts: est)));
-                      },
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CarbonEmissionPage())),
                     ),
-                    
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.recommend),
+                      title: const Text('Recommendations'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RecommendationPage())),
+                    ),
                   ],
                 ),
               ),
@@ -1285,6 +827,37 @@ class _DeviceDetailPageState extends State<DeviceDetailPage> {
         ),
       ),
     );
+  }
+
+  Widget _detailImageFallback(String imageUrl) {
+    // If imageUrl looks like a network URL, use Image.network, otherwise show a placeholder icon
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('https')) {
+      return Image.network(
+        imageUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(width: 120, height: 120, color: Colors.grey[200], child: const Icon(Icons.kitchen, color: Colors.grey)),
+      );
+    }
+
+    return Container(width: 120, height: 120, color: Colors.grey[200], child: const Icon(Icons.kitchen, color: Colors.grey));
+  }
+
+  Widget _smallImageWidget(String? imageUrl) {
+    final url = imageUrl ?? '';
+    try {
+      if (url.startsWith('http')) {
+        return Image.network(url, width: 36, height: 36, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.power));
+      }
+      final f = File(url);
+      if (f.existsSync()) {
+        return Image.file(f, width: 36, height: 36, fit: BoxFit.contain);
+      }
+      return Image.asset(url, width: 36, height: 36, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Icon(Icons.power));
+    } catch (_) {
+      return const Icon(Icons.power);
+    }
   }
 }
 
@@ -1360,7 +933,7 @@ class _DevicePowerStatisticsPageState extends State<DevicePowerStatisticsPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, MediaQuery.of(context).viewInsets.bottom + 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1561,256 +1134,38 @@ class SchedulePage extends StatefulWidget {
 }
 
 class _SchedulePageState extends State<SchedulePage> {
-  List<Map<String, dynamic>> _schedules = [];
+  List<Map<String, dynamic>> _alarms = [];
 
   @override
   void initState() {
     super.initState();
-    _loadSchedules();
+    _loadAlarms();
   }
 
-  Future<void> _loadSchedules() async {
+  Future<void> _loadAlarms() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      // prefer new JSON storage
-      final raw = prefs.getString('schedules_json');
-      if (raw != null && raw.isNotEmpty) {
-        final decoded = jsonDecode(raw) as List<dynamic>;
-        setState(() => _schedules = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList());
-        return;
-      }
-
-      // fallback to old query-string list format
-      final jsonList = prefs.getStringList('schedules') ?? [];
-      final loaded = <Map<String, dynamic>>[];
-      for (var e in jsonList) {
-        try {
-          final m = Uri.splitQueryString(e);
-          // convert values: attempt to parse booleans/numbers where appropriate
-          final parsed = <String, dynamic>{};
-          m.forEach((k, v) {
-            if (v == 'true' || v == 'false') {
-              parsed[k] = v == 'true';
-            } else if (int.tryParse(v) != null) {
-              parsed[k] = v; // keep as string for id/hours; we'll normalize later
-            } else {
-              parsed[k] = v;
-            }
-          });
-          loaded.add(parsed);
-        } catch (_) {
-          // ignore malformed entries
-        }
-      }
-      setState(() => _schedules = loaded);
-    } catch (_) {
-      setState(() => _schedules = []);
-    }
-  }
-
-  Future<void> _saveSchedules() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      // save as a single JSON string to preserve types
-      await prefs.setString('schedules_json', jsonEncode(_schedules));
+      final list = prefs.getStringList('alarms') ?? [];
+      setState(() {
+        _alarms = list.map((s) {
+          try {
+            return Map<String, dynamic>.from(jsonDecode(s) as Map);
+          } catch (_) {
+            return <String, dynamic>{};
+          }
+        }).where((m) => m.isNotEmpty).toList();
+      });
     } catch (_) {}
   }
 
-  void _addSchedule(Map<String, dynamic> s) {
-    setState(() => _schedules.add(s));
-    _saveSchedules();
-  }
-
-  void _removeSchedule(String id) {
-    setState(() => _schedules.removeWhere((e) => e['id']?.toString() == id.toString()));
-    _saveSchedules();
-  }
-
-  void _removeScheduleAtIndex(int idx) {
-    if (idx < 0 || idx >= _schedules.length) return;
-    setState(() => _schedules.removeAt(idx));
-    _saveSchedules();
-  }
-
-  void _removeMultipleByIndices(List<int> indices) {
-    // remove in descending order to keep indices valid
-    final sorted = indices.toList()..sort((a, b) => b.compareTo(a));
-    setState(() {
-      for (var i in sorted) {
-        if (i >= 0 && i < _schedules.length) _schedules.removeAt(i);
-      }
-    });
-    _saveSchedules();
-  }
-
-  void _toggleEnabled(String id, bool val) {
-    final idx = _schedules.indexWhere((e) => e['id']?.toString() == id.toString());
-    if (idx >= 0) {
-      setState(() => _schedules[idx]['enabled'] = val);
-      _saveSchedules();
-      return;
-    }
-    // fallback: try parse id as index
-    final tryIdx = int.tryParse(id);
-    if (tryIdx != null && tryIdx >= 0 && tryIdx < _schedules.length) {
-      setState(() => _schedules[tryIdx]['enabled'] = val);
-      _saveSchedules();
-    }
-  }
-
-  void _updateSchedule(Map<String, dynamic> s) {
-    final id = s['id']?.toString();
-    if (id == null) return;
-    final idx = _schedules.indexWhere((e) => e['id']?.toString() == id.toString());
-    if (idx >= 0) {
-      setState(() => _schedules[idx] = s);
-      _saveSchedules();
-      return;
-    }
-    // if no matching id, try to match by index stored in id
-    final tryIdx = int.tryParse(id);
-    if (tryIdx != null && tryIdx >= 0 && tryIdx < _schedules.length) {
-      setState(() => _schedules[tryIdx] = s);
-      _saveSchedules();
-    }
-  }
-
-  void _updateScheduleAtIndex(int idx, Map<String, dynamic> s) {
-    if (idx < 0 || idx >= _schedules.length) return;
-    setState(() => _schedules[idx] = s);
-    _saveSchedules();
-  }
-
-  Future<void> _openEditAtIndex(int idx) async {
-    if (idx < 0 || idx >= _schedules.length) return;
-    final s = _schedules[idx];
-    final res = await Navigator.of(context).push<Map<String, dynamic>>(MaterialPageRoute(builder: (_) => AddSchedulePage(initialData: s)));
-    if (res != null) _updateScheduleAtIndex(idx, res);
-  }
-
-  void _showScheduleOptions() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Center(child: Container(width: 48, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4)))),
-              const SizedBox(height: 12),
-              ListTile(
-                title: const Center(child: Text('Schedule time', style: TextStyle(fontWeight: FontWeight.w600))),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSchedulePage()));
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: const Text('Start', textAlign: TextAlign.center),
-                onTap: () {
-                  // enable all
-                  setState(() {
-                    for (var s in _schedules) s['enabled'] = true;
-                    _saveSchedules();
-                  });
-                  Navigator.of(ctx).pop();
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: const Text('End', textAlign: TextAlign.center),
-                onTap: () {
-                  // disable all
-                  setState(() {
-                    for (var s in _schedules) s['enabled'] = false;
-                    _saveSchedules();
-                  });
-                  Navigator.of(ctx).pop();
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: const Text('Close', textAlign: TextAlign.center),
-                onTap: () => Navigator.of(ctx).pop(),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _openAdd() async {
-    final res = await Navigator.of(context).push<Map<String, dynamic>>(MaterialPageRoute(builder: (_) => const AddSchedulePage()));
-    if (res != null) _addSchedule(res);
-  }
-
-  void _showDeletePicker() {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final count = _schedules.length;
-        final selected = List<bool>.filled(count, false);
-        return StatefulBuilder(builder: (ctx2, setInner) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Select schedules to delete', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: count,
-                    itemBuilder: (c, i) {
-                      final s = _schedules[i];
-                      final start = s['start']?.toString() ?? '—';
-                      final end = s['end']?.toString() ?? '—';
-                      return CheckboxListTile(
-                        value: selected[i],
-                        onChanged: (v) => setInner(() => selected[i] = v ?? false),
-                        title: Text('$start - $end'),
-                        subtitle: Text(s['repeat']?.toString() ?? ''),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-                    ElevatedButton(
-                      onPressed: selected.any((v) => v)
-                          ? () {
-                              final toDelete = <int>[];
-                              for (var i = 0; i < selected.length; i++) if (selected[i]) toDelete.add(i);
-                              Navigator.of(ctx).pop();
-                              _removeMultipleByIndices(toDelete);
-                            }
-                          : null,
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          );
-        });
-      },
-    );
+  Future<void> _toggleEnabled(int idx, bool v) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList('alarms') ?? [];
+    final map = Map<String, dynamic>.from(_alarms[idx]);
+    map['enabled'] = v;
+    list[idx] = jsonEncode(map);
+    await prefs.setStringList('alarms', list);
+    await _loadAlarms();
   }
 
   @override
@@ -1821,24 +1176,12 @@ class _SchedulePageState extends State<SchedulePage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: 'Schedule time',
-            icon: const Icon(Icons.access_time_outlined),
-            onPressed: _showScheduleOptions,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (v) {
-              if (v == 'delete') _showDeletePicker();
-            },
-            itemBuilder: (_) => [const PopupMenuItem(value: 'delete', child: Text('Delete schedule'))],
-          ),
-        ],
+        actions: [IconButton(onPressed: () async { await Navigator.of(context).pushNamed('/setAlarm'); await _loadAlarms(); }, icon: const Icon(Icons.add))],
       ),
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: _schedules.isEmpty
-            ? Center(
+      body: _alarms.isEmpty
+          ? SafeArea(
+              child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1852,365 +1195,33 @@ class _SchedulePageState extends State<SchedulePage> {
                     const Text('Nothing here yet', style: TextStyle(color: Colors.black54)),
                   ],
                 ),
-              )
-            : ListView.separated(
-                itemCount: _schedules.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (ctx, i) {
-                  final s = _schedules[i];
-                  final enabled = (s['enabled'] is bool) ? s['enabled'] as bool : (s['enabled']?.toString() == 'true');
-                  final start = s['start']?.toString() ?? '—';
-                  final end = s['end']?.toString() ?? '—';
-                  final repeat = s['repeat']?.toString() ?? '';
-                  return ListTile(
-                    title: Text('$start - $end'),
-                    subtitle: Text(repeat),
-                    onTap: () async {
-                      await _openEditAtIndex(i);
-                    },
-                    trailing: Switch.adaptive(value: enabled, onChanged: (v) => _toggleEnabled(i.toString(), v)),
-                  );
-                },
               ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAdd,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        child: const Icon(Icons.add),
-      ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(12),
+              itemCount: _alarms.length,
+              separatorBuilder: (_, __) => const Divider(height: 8),
+              itemBuilder: (ctx, i) {
+                final a = _alarms[i];
+                final sh = a['startHour'] ?? 0;
+                final sm = a['startMinute'] ?? 0;
+                final eh = a['endHour'] ?? 0;
+                final em = a['endMinute'] ?? 0;
+                final enabled = a['enabled'] ?? true;
+                final label = a['label'] ?? '';
+                final fmt = (int h, int m) => '${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}';
+                return ListTile(
+                  title: Text('${fmt(sh, sm)} - ${fmt(eh, em)}'),
+                  subtitle: Text(label.toString()),
+                  trailing: Switch(value: enabled, onChanged: (v) => _toggleEnabled(i, v)),
+                  onTap: () async {
+                    await Navigator.of(context).pushNamed('/setAlarm', arguments: {'alarm': a, 'index': i});
+                    await _loadAlarms();
+                  },
+                );
+              },
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-}
- 
-class AddSchedulePage extends StatefulWidget {
-  final Map<String, dynamic>? initialData;
-  const AddSchedulePage({Key? key, this.initialData}) : super(key: key);
-
-  @override
-  State<AddSchedulePage> createState() => _AddSchedulePageState();
-}
-
-class AddNewRoomPage extends StatefulWidget {
-  const AddNewRoomPage({Key? key}) : super(key: key);
-
-  @override
-  State<AddNewRoomPage> createState() => _AddNewRoomPageState();
-}
-
-class _AddNewRoomPageState extends State<AddNewRoomPage> {
-  final TextEditingController _locationController = TextEditingController(text: 'Kitchen');
-  final TextEditingController _thingsController = TextEditingController(text: 'Air Conditioner');
-  final TextEditingController _deviceController = TextEditingController(text: 'Wifi Smart Plug');
-  final TextEditingController _costsController = TextEditingController();
-  late List<String> _availableDevices;
-  String? _selectedDevice;
-
-  @override
-  void dispose() {
-    _locationController.dispose();
-    _thingsController.dispose();
-    _deviceController.dispose();
-    _costsController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // populate device list; in future this can be replaced with a runtime query
-    _availableDevices = ['Wifi Smart Plug'];
-    _selectedDevice = _deviceController.text.isNotEmpty ? _deviceController.text : _availableDevices.first;
-    _deviceController.text = _selectedDevice!;
-  }
-
-  Widget _fieldCard({required IconData icon, required String title, String? subtitle, Widget? trailing}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.green.shade100),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: Colors.green[700]),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                if (subtitle != null) const SizedBox(height: 6),
-                if (subtitle != null) Text(subtitle, style: const TextStyle(color: Colors.black54, fontSize: 13)),
-              ],
-            ),
-          ),
-          if (trailing != null) trailing else const Icon(Icons.chevron_right, color: Colors.black38),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Add New Room'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 12.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                // top icon
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
-                  child: const Center(child: Icon(Icons.eco, size: 48, color: Colors.green)),
-                ),
-                const SizedBox(height: 18),
-
-                // form cards with editable trailing fields
-                _fieldCard(
-                  icon: Icons.location_on_outlined,
-                  title: 'Location',
-                  subtitle: null,
-                  trailing: SizedBox(
-                    width: 180,
-                    child: TextField(
-                      controller: _locationController,
-                      textAlign: TextAlign.right,
-                      decoration: const InputDecoration(border: InputBorder.none, hintText: 'Enter location'),
-                    ),
-                  ),
-                ),
-
-                _fieldCard(
-                  icon: Icons.add_circle_outline,
-                  title: 'Things',
-                  subtitle: null,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 140,
-                        child: TextField(
-                          controller: _thingsController,
-                          textAlign: TextAlign.right,
-                          decoration: const InputDecoration(border: InputBorder.none, hintText: 'Item'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(onPressed: () {}, icon: Icon(Icons.camera_alt, color: Colors.green[700])),
-                    ],
-                  ),
-                ),
-
-                _fieldCard(
-                  icon: Icons.monetization_on_outlined,
-                  title: 'Costs',
-                  subtitle: null,
-                  trailing: SizedBox(
-                    width: 140,
-                    child: TextField(
-                      controller: _costsController,
-                      textAlign: TextAlign.right,
-                      decoration: const InputDecoration(border: InputBorder.none, hintText: 'Costs'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-                // Device card with dropdown to choose a connected device
-                _fieldCard(
-                  icon: Icons.wifi_outlined,
-                  title: 'Device',
-                  subtitle: _selectedDevice ?? _deviceController.text,
-                  trailing: SizedBox(
-                    width: 180,
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _selectedDevice,
-                        items: _availableDevices.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-                        onChanged: (v) {
-                          setState(() {
-                            _selectedDevice = v;
-                            if (v != null) _deviceController.text = v;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[600],
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () {
-                      // default action: return entered values
-                      Navigator.of(context).pop({
-                        'location': _locationController.text,
-                        'things': _thingsController.text,
-                        'device': _selectedDevice ?? _deviceController.text,
-                        'costs': _costsController.text,
-                      });
-                    },
-                    child: const Text('Save Task', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
- 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.initialData != null ? 'Edit Schedule' : 'Add Schedule'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () {
-              // build schedule map and return to caller
-              final id = widget.initialData != null ? widget.initialData!['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString() : DateTime.now().millisecondsSinceEpoch.toString();
-              final repeatCsv = _repeatDays.asMap().entries.where((e) => e.value).map((e) => e.key.toString()).join(',');
-              final map = {
-                'id': id,
-                'start': _format(_start),
-                'startHour': _start.hour.toString(),
-                'startMinute': _start.minute.toString(),
-                'end': _format(_end),
-                'endHour': _end.hour.toString(),
-                'endMinute': _end.minute.toString(),
-                'repeat': _repeatLabel,
-                'repeatDays': repeatCsv,
-                'label': widget.initialData?['label']?.toString() ?? '',
-                'vibrate': _vibrate,
-                'enabled': (widget.initialData != null && widget.initialData!['enabled'] is bool)
-                    ? widget.initialData!['enabled']
-                    : (widget.initialData?['enabled']?.toString() == 'true'),
-              };
-              Navigator.of(context).pop(map);
-            },
-            child: const Text('Save'),
-          )
-        ],
-      ),
-      backgroundColor: const Color(0xFFF6FBF4),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              // time selectors area with pale green background
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  children: [
-                    // Start
-                    _TimeRow(label: 'Start time', value: _format(_start), onTap: _pickStart),
-                    const SizedBox(height: 12),
-                    // End
-                    _TimeRow(label: 'End time', value: _format(_end), onTap: _pickEnd),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  children: [
-                    ListTile(leading: const Icon(Icons.repeat), title: const Text('Repeat'), subtitle: Text(_repeatLabel), onTap: _openRepeatModal),
-                    const Divider(height: 1),
-                    ListTile(leading: const Icon(Icons.notifications), title: const Text('Default'), subtitle: const Text('Default'), onTap: () {}),
-                    const Divider(height: 1),
-                    SwitchListTile.adaptive(
-                      value: _vibrate,
-                      onChanged: (v) => setState(() => _vibrate = v),
-                      secondary: const Icon(Icons.vibration),
-                      title: const Text('Vibrate'),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(leading: const Icon(Icons.label_outline), title: const Text('Label'), subtitle: const Text('None'), onTap: () {}),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TimeRow extends StatelessWidget {
-  const _TimeRow({required this.label, required this.value, required this.onTap, Key? key}) : super(key: key);
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(10),
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
-                  const Icon(Icons.access_time_outlined, color: Colors.black54),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -2223,229 +1234,216 @@ class GoalsPage extends StatefulWidget {
 }
 
 class _GoalsPageState extends State<GoalsPage> {
-  // sample data; replace with real values as needed
-  double electricityToday = 9.0; // kWh
-  double timeToday = 6.0; // hours
-  double electricityGoal = 12.0; // kWh goal
-  double timeGoal = 8.0; // hours goal
-  String electricityUnit = 'kWh';
-  List<double> sparklinePoints = [0.2, 0.4, 0.6, 0.8, 0.75, 0.85, 0.6];
+  // internal canonical values stored in kWh
+  double _todayKwh = 9.0;
+  double _goalKwh = 12.0;
+  String _displayUnit = 'kWh'; // 'kWh' or 'W'
+  bool _loading = true;
+  double _runtimeHours = 8.0;
 
   @override
   void initState() {
     super.initState();
-    _loadGoalsFromPrefs();
+    _loadPrefs();
   }
 
-  Future<void> _loadGoalsFromPrefs() async {
+  Future<void> _loadPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      // prefer canonical kWh key
-      final storedKwh = prefs.getDouble('settings_electricity_goal_kwh');
-      final oldEg = prefs.getDouble('settings_electricity_goal');
-      final storedUnit = prefs.getString('settings_electricity_unit');
-      final rt = prefs.getDouble('settings_runtime_goal');
-      double newGoalKwh = electricityGoal;
-      if (storedKwh != null) {
-        newGoalKwh = storedKwh;
-      } else if (oldEg != null) {
-        // migrate from old key using storedUnit
-        if (storedUnit == 'W') newGoalKwh = oldEg / 1000.0; else newGoalKwh = oldEg;
-      }
+      // goal value stored in Settings is saved as the displayed number in its unit
+      final storedGoal = prefs.getDouble('goal_electricity_value');
+      final storedUnit = prefs.getString('goal_electricity_unit') ?? 'W';
+      // today's electricity may be stored as kWh under 'today_electricity_kwh'
+      final storedToday = prefs.getDouble('today_electricity_kwh');
+      final storedRuntime = prefs.getDouble('goal_runtime_value');
+      final storedRuntimeUnit = prefs.getString('goal_runtime_unit') ?? 'Hours';
+
       setState(() {
-        electricityGoal = newGoalKwh;
-        if (rt != null) timeGoal = rt;
-        if (storedUnit != null) electricityUnit = storedUnit;
+        _displayUnit = storedUnit == 'W' ? 'W' : 'kWh';
+        if (storedGoal != null) {
+          // normalize to kWh internally
+          _goalKwh = (_displayUnit == 'W') ? (storedGoal / 1000.0) : storedGoal;
+        }
+        if (storedToday != null) {
+          _todayKwh = storedToday;
+        }
+        if (storedRuntime != null) {
+          // runtime stored as hours in Settings UI
+          _runtimeHours = storedRuntime;
+        }
+        _loading = false;
       });
-    } catch (_) {}
+    } catch (_) {
+      setState(() => _loading = false);
+    }
   }
+
+  double _toDisplay(double kwh) => (_displayUnit == 'W') ? kwh * 1000.0 : kwh;
+
+  String _unitLabel() => _displayUnit;
 
   @override
   Widget build(BuildContext context) {
-    final progress = (electricityGoal > 0) ? (electricityToday / electricityGoal).clamp(0.0, 1.0) : 0.0;
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    final displayToday = _toDisplay(_todayKwh);
+    final displayGoal = _toDisplay(_goalKwh);
+    final double pct = (_goalKwh <= 0) ? 0.0 : (_todayKwh / _goalKwh).clamp(0.0, 1.0);
+    final percentLabel = '${(pct * 100).round()}%';
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Goals'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        leading: const BackButton(color: Colors.black),
+        centerTitle: true,
+        title: const Text('Goals', style: TextStyle(color: Colors.black)),
         actions: [
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () async {
-              final res = await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
-              // if settings changed, reload goals from prefs so UI updates immediately
-              if (res != null) {
-                _loadGoalsFromPrefs();
-              }
-            },
-          ),
+          IconButton(onPressed: () async {
+            // open settings; when returning reload prefs to reflect unit/value changes
+            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
+            await _loadPrefs();
+          }, icon: const Icon(Icons.settings, color: Colors.black87)),
         ],
       ),
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Left: electricity value
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Builder(builder: (_) {
-                            final displayToday = (electricityUnit == 'kWh') ? electricityToday : (electricityToday * 1000.0);
-                            final unitLabel = electricityUnit;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(displayToday.toStringAsFixed(1), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                                const SizedBox(height: 4),
-                                Text(unitLabel, style: const TextStyle(color: Colors.black54)),
-                              ],
-                            );
-                          }),
-                          const SizedBox(height: 8),
-                          const Text('Electricity today', style: TextStyle(color: Colors.black54)),
-                        ],
-                      ),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // left stats
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(displayToday.toStringAsFixed(1), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                            const SizedBox(width: 6),
+                            Text(_unitLabel(), style: const TextStyle(color: Colors.black54)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Electricity\ntoday', style: TextStyle(color: Colors.black45, fontSize: 12)),
+                      ],
                     ),
+                  ),
 
-                    // Middle: time value
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(timeToday.toStringAsFixed(1), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 4),
-                          const Text('hours', style: TextStyle(color: Colors.black54)),
-                          const SizedBox(height: 8),
-                          const Text('Time today', style: TextStyle(color: Colors.black54)),
-                        ],
-                      ),
+                  const SizedBox(width: 12),
+
+                  // middle stat
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: const [
+                            Text('6.0', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                            SizedBox(width: 6),
+                            Text('hours', style: TextStyle(color: Colors.black54)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Time\ntoday', style: TextStyle(color: Colors.black45, fontSize: 12)),
+                      ],
                     ),
+                  ),
 
-                    // Right: progress bar box
-                    SizedBox(
-                      width: 110,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 22,
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.black)),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: Stack(
-                                children: [
-                                  Container(color: Colors.white),
-                                  FractionallySizedBox(widthFactor: progress, child: Container(color: Colors.black)),
-                                ],
+                  const SizedBox(width: 12),
+
+                  // right boxed percent
+                  SizedBox(
+                    width: 120,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          height: 28,
+                          decoration: BoxDecoration(border: Border.all(color: Colors.black, width: 2), borderRadius: BorderRadius.circular(6)),
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: FractionallySizedBox(
+                                    widthFactor: pct,
+                                    child: Container(margin: const EdgeInsets.all(4.0), decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4))),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Chart card
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: SizedBox(
-                      height: 120,
-                      child: Row(
-                        children: [
-                          // sparkline area
-                          Expanded(
-                            child: CustomPaint(
-                              painter: _SparklinePainter(),
-                              child: Container(),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // y-axis labels
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: const [
-                              Text('6.0', style: TextStyle(color: Colors.black38, fontSize: 12)),
-                              Text('3.0', style: TextStyle(color: Colors.black38, fontSize: 12)),
-                              Text('0.0', style: TextStyle(color: Colors.black38, fontSize: 12)),
+                              Positioned.fill(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                                  child: Align(alignment: Alignment.centerRight, child: Text(percentLabel, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w600))),
+                                ),
+                              ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text('${displayToday.toStringAsFixed(1)} / ${displayGoal.toStringAsFixed(1)} ${_unitLabel()}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                ],
+              ),
 
-                const Text('Daily Goals', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(
+              const SizedBox(height: 12),
+
+              // small chart with grid and bars
+              Container(
+                height: 120,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(8)),
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Builder(builder: (_) {
-                            final displayGoal = (electricityUnit == 'kWh') ? electricityGoal : (electricityGoal * 1000.0);
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(displayGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 4),
-                                const Text('Electricity', style: TextStyle(color: Colors.black54)),
-                              ],
-                            );
-                          }),
-                        ],
+                    Column(children: List.generate(4, (i) => Expanded(child: Container(decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[200]!))))))),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: List.generate(10, (i) {
+                          final heights = [6, 8, 10, 30, 40, 28, 20, 48, 32, 12];
+                          return Container(width: 8, height: heights[i].toDouble(), decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(4)));
+                        }),
                       ),
                     ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(timeGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          const Text('Runtime', style: TextStyle(color: Colors.black54)),
-                        ],
-                      ),
-                    ),
+                    Positioned(left: 4, right: 4, bottom: 0, child: Padding(padding: const EdgeInsets.only(top: 8.0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [Text('6:00', style: TextStyle(fontSize: 10, color: Colors.black38)), Text('12:00', style: TextStyle(fontSize: 10, color: Colors.black38)), Text('18:00', style: TextStyle(fontSize: 10, color: Colors.black38)), Text('22:00', style: TextStyle(fontSize: 10, color: Colors.black38))]))),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // 'Change Goals' removed — use SettingsPage to edit goals
-                const SizedBox(height: 8),
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    title: const Text('History'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HistoryPage())),
-                  ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text('Daily Goals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(displayGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(height: 4), Text(_unitLabel(), style: const TextStyle(color: Colors.black54)), const SizedBox(height: 6), const Text('Electricity', style: TextStyle(color: Colors.black45, fontSize: 12))])),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_runtimeHours.toStringAsFixed(1), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(height: 4), const Text('hours', style: TextStyle(color: Colors.black54)), const SizedBox(height: 6), const Text('Runtime', style: TextStyle(color: Colors.black45, fontSize: 12))])),
+                    ])
+                  ]),
                 ),
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    title: const Text('Recommendations'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RecommendationsPage())),
-                  ),
-                ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 12),
+              Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]), child: ListTile(title: const Text('History'), trailing: const Icon(Icons.chevron_right), onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HistoryPage())); })),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
@@ -2460,107 +1458,340 @@ class AddDevicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
         title: const Text('Add Device'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
+        actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.qr_code))],
       ),
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 18),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
-              child: Column(
-                children: const [
-                  Text('Searching for nearby devices. Make sure your device has entered pairing mode',
-                      textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: Colors.black87)),
-                  SizedBox(height: 14),
-                ],
-              ),
-            ),
-
-            // Wi-Fi hint card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(width: 6, height: 6, child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text('Turn on Wi-Fi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                          SizedBox(height: 6),
-                          Text('Wi‑Fi is required to search for devices.', style: TextStyle(color: Colors.black54, fontSize: 13)),
-                        ],
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(color: Colors.black87, fontSize: 14),
+                          children: [
+                            const TextSpan(text: 'Searching for nearby devices. Make sure your device has entered '),
+                            TextSpan(text: 'pairing mode', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                          ],
+                        ),
                       ),
                     ),
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: const [
-                          Icon(Icons.wifi, color: Colors.black54, size: 18),
-                          Positioned(right: 6, top: 6, child: Icon(Icons.error, color: Colors.red, size: 10)),
-                        ],
-                      ),
-                    )
                   ],
                 ),
-              ),
-            ),
+                const SizedBox(height: 18),
 
-            const SizedBox(height: 28),
-
-            // Large radar circles
-            Expanded(
-              child: Center(
-                child: SizedBox(
-                  width: 300,
-                  height: 300,
-                  child: CustomPaint(
-                    painter: _RadarPainter(),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Add manually and socket icon
-            Padding(
-              padding: const EdgeInsets.only(bottom: 28.0),
-              child: Column(
-                children: [
-                  const Text('Add Manually', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
-                  Material(
-                    color: Colors.white,
-                    elevation: 2,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: Colors.grey[50]),
-                      child: IconButton(
-                        icon: const Icon(Icons.power, size: 30, color: Colors.black54),
-                        onPressed: () {},
-                      ),
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+                            Text('Turn on Wi‑Fi', style: TextStyle(fontWeight: FontWeight.w700)),
+                            SizedBox(height: 6),
+                            Text('Wi‑Fi is required to search for devices.', style: TextStyle(color: Colors.black54)),
+                          ]),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+                          child: const Icon(Icons.wifi, color: Colors.black26),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 28),
+
+                // Radar illustration
+                Center(
+                  child: SizedBox(
+                    width: 300,
+                    height: 300,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        for (var i = 5; i >= 1; i--)
+                          Container(
+                            width: 60.0 * i,
+                            height: 60.0 * i,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue.withOpacity(0.06 * i),
+                              border: Border.all(color: Colors.blue.withOpacity(0.12)),
+                            ),
+                          ),
+                        Container(width: 10, height: 10, decoration: BoxDecoration(color: Colors.blue, shape: BoxShape.circle)),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+                Center(child: Text('Add Manually', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87))),
+                const SizedBox(height: 18),
+
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: const Offset(0, 2))]),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
+                          child: const Center(child: Icon(Icons.power_outlined, size: 28, color: Colors.green)),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(child: Text('Socket', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+                        const Icon(Icons.chevron_right, color: Colors.black38),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AddNewRoomPage extends StatefulWidget {
+  const AddNewRoomPage({Key? key}) : super(key: key);
+
+  @override
+  State<AddNewRoomPage> createState() => _AddNewRoomPageState();
+}
+
+class _AddNewRoomPageState extends State<AddNewRoomPage> {
+  final TextEditingController _ctrl = TextEditingController();
+  bool _saving = false;
+  final TextEditingController _thingCtrl = TextEditingController();
+  String? _pickedImagePath;
+  String? _selectedDevice;
+  final List<String> _deviceOptions = ['Wifi Smart Plug', 'Air Conditioner', 'Wifi Bulb', 'Other'];
+  String? _costs;
+  final TextEditingController _customDeviceCtrl = TextEditingController();
+  final TextEditingController _costsCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _thingCtrl.dispose();
+    _customDeviceCtrl.dispose();
+    _costsCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSave() async {
+    final text = _ctrl.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter room name')));
+      return;
+    }
+    setState(() => _saving = true);
+    // return a map with room name, single thing, optional image path, device and costs
+    final deviceValue = (_selectedDevice == 'Other') ? (_customDeviceCtrl.text.trim()) : (_selectedDevice ?? _deviceOptions.first);
+    Navigator.of(context).pop({
+      'room': text,
+      'thing': _thingCtrl.text.trim(),
+      'image': _pickedImagePath ?? '',
+      'device': deviceValue,
+      'costs': _costsCtrl.text.trim()
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Add New Room')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // top decorative icon
+                const SizedBox(height: 8),
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Center(child: Icon(Icons.eco, color: Colors.green, size: 54)),
+                ),
+                const SizedBox(height: 18),
+
+                // Location card
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.shade100), color: Colors.white),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, color: Colors.green),
+                        const SizedBox(width: 12),
+                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Location', style: TextStyle(fontWeight: FontWeight.w600)), const SizedBox(height: 4), TextField(controller: _ctrl, decoration: const InputDecoration.collapsed(hintText: 'e.g. Kitchen'))])),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Things card with add photo
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.shade100), color: Colors.white),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Things', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(child: TextField(controller: _thingCtrl, decoration: const InputDecoration.collapsed(hintText: 'e.g. Air Conditioner'))),
+                      const SizedBox(width: 8),
+                      TextButton.icon(onPressed: _pickImageBottomSheet, icon: const Icon(Icons.camera_alt_outlined, color: Colors.green), label: const Text('Add Photo', style: TextStyle(color: Colors.green)))
+                    ]),
+                    const SizedBox(height: 8),
+                    if (_pickedImagePath == null || _pickedImagePath!.isEmpty)
+                      const Text('', style: TextStyle(color: Colors.black54))
+                    else
+                      Row(children: [Image.file(File(_pickedImagePath!), width: 64, height: 64, fit: BoxFit.cover), const SizedBox(width: 8), Expanded(child: Text(_pickedImagePath!.split('/').last, overflow: TextOverflow.ellipsis)), IconButton(icon: const Icon(Icons.close), onPressed: () => setState(() => _pickedImagePath = null))])
+                  ]),
+                ),
+                const SizedBox(height: 12),
+
+                // Device card (dropdown)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.shade100), color: Colors.white),
+                  child: Row(children: [
+                    const Icon(Icons.devices_outlined, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('Device', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: _selectedDevice ?? _deviceOptions.first,
+                        items: _deviceOptions.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                        onChanged: (v) => setState(() {
+                          _selectedDevice = v;
+                          if (v != 'Other') _customDeviceCtrl.text = '';
+                        }),
+                      ),
+                      if ((_selectedDevice ?? _deviceOptions.first) == 'Other')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: TextField(controller: _customDeviceCtrl, decoration: const InputDecoration(hintText: 'Enter device name', border: OutlineInputBorder())),
+                        ),
+                    ])),
+                  ]),
+                ),
+                const SizedBox(height: 12),
+
+                // Costs card (numeric-friendly)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.shade100), color: Colors.white),
+                  child: Row(children: [
+                    const Icon(Icons.account_balance_wallet_outlined, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const Text('Costs', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      TextField(controller: _costsCtrl, keyboardType: TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration.collapsed(hintText: 'e.g. 5'),),
+                    ])),
+                  ]),
+                ),
+
+                const SizedBox(height: 18),
+                Row(children: [Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.green), onPressed: _saving ? null : _onSave, child: const Padding(padding: EdgeInsets.symmetric(vertical: 14), child: Text('Save Task'))))]),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource src) async {
+    try {
+      final picker = ImagePicker();
+      final xfile = await picker.pickImage(source: src, maxWidth: 1200, maxHeight: 1200, imageQuality: 80);
+      if (xfile != null) {
+        try {
+          final appDir = await getApplicationDocumentsDirectory();
+          final filename = '${DateTime.now().millisecondsSinceEpoch}_${xfile.name}';
+          final newPath = '${appDir.path}/$filename';
+          await File(xfile.path).copy(newPath);
+          // crop & resize to a fixed square size to avoid very large images
+          try {
+            final f = File(newPath);
+            await _cropAndResizeImage(f, 512);
+          } catch (_) {}
+          setState(() => _pickedImagePath = newPath);
+        } catch (_) {
+          // fallback: keep original path if copy fails
+          setState(() => _pickedImagePath = xfile.path);
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Crop center and resize to `size` x `size` pixels. Overwrites the file.
+  Future<void> _cropAndResizeImage(File file, int size) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) return;
+
+      // center-crop and resize to square using copyResizeCropSquare (compatible across versions)
+      final resized = img.copyResizeCropSquare(image, size: size, interpolation: img.Interpolation.cubic);
+
+      // encode to JPEG and overwrite
+      final jpg = img.encodeJpg(resized, quality: 85);
+      await file.writeAsBytes(jpg, flush: true);
+    } catch (_) {
+      // ignore errors and keep original file
+    }
+  }
+
+  void _pickImageBottomSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(leading: const Icon(Icons.photo_camera), title: const Text('Take photo'), onTap: () { Navigator.of(ctx).pop(); _pickImage(ImageSource.camera); }),
+            ListTile(leading: const Icon(Icons.photo_library), title: const Text('Choose from gallery'), onTap: () { Navigator.of(ctx).pop(); _pickImage(ImageSource.gallery); }),
           ],
         ),
       ),
@@ -2568,448 +1799,7 @@ class AddDevicePage extends StatelessWidget {
   }
 }
 
-class _RadarPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxR = size.width / 2;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = Colors.blue.withOpacity(0.12);
-
-    for (var i = 4; i >= 1; i--) {
-      canvas.drawCircle(center, maxR * i / 4, paint);
-    }
-
-    // inner filled dot
-    final fill = Paint()..color = Colors.blue.withOpacity(0.9);
-    canvas.drawCircle(center, 6, fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({Key? key}) : super(key: key);
-
-  @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
-}
-
-class NotificationSettingsPage extends StatefulWidget {
-  const NotificationSettingsPage({Key? key}) : super(key: key);
-
-  @override
-  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
-}
-
-class SecuritySettingsPage extends StatefulWidget {
-  const SecuritySettingsPage({Key? key}) : super(key: key);
-
-  @override
-  State<SecuritySettingsPage> createState() => _SecuritySettingsPageState();
-}
-
-class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
-  bool _twoFactor = true;
-  bool _appLock = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSecurityPrefs();
-  }
-
-  Future<void> _loadSecurityPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final two = prefs.getBool('settings_security_2fa');
-      final lock = prefs.getBool('settings_security_app_lock');
-      if (two != null || lock != null) {
-        setState(() {
-          if (two != null) _twoFactor = two;
-          if (lock != null) _appLock = lock;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _saveSecurityPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('settings_security_2fa', _twoFactor);
-      await prefs.setBool('settings_security_app_lock', _appLock);
-    } catch (_) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Security Settings'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: const Color(0xFFF2FBF0),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Account Security', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 10),
-
-                // 2FA pill
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Two-Factor Authemi cation (2FA)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                            SizedBox(height: 6),
-                            Text('Manage your verification methods', style: TextStyle(color: Colors.black45, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                      Switch.adaptive(value: _twoFactor, onChanged: (v) {
-                        setState(() => _twoFactor = v);
-                        _saveSecurityPrefs();
-                      }),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // simple list tiles
-                Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: const Text('Change Password'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {},
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        title: const Text('Recent Login Activity'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-                const Text('Device Management', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: const Text('Manage Authorized Devices'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {},
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.lock_outline, color: Colors.black54),
-                        title: const Text('App Lock'),
-                        trailing: Switch.adaptive(value: _appLock, onChanged: (v) {
-                          setState(() => _appLock = v);
-                          _saveSecurityPrefs();
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
-  bool _enableAll = true;
-  bool _generalNotifications = false;
-  bool _energyTips = false;
-  bool _doNotDisturb = false;
-  bool _vibration = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNotificationPrefs();
-  }
-
-  Future<void> _loadNotificationPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final eAll = prefs.getBool('settings_notif_enable_all');
-      final gen = prefs.getBool('settings_notif_general');
-      final energy = prefs.getBool('settings_notif_energy_tips');
-      final dnd = prefs.getBool('settings_notif_dnd');
-      final vib = prefs.getBool('settings_notif_vibration');
-      setState(() {
-        if (eAll != null) _enableAll = eAll;
-        if (gen != null) _generalNotifications = gen;
-        if (energy != null) _energyTips = energy;
-        if (dnd != null) _doNotDisturb = dnd;
-        if (vib != null) _vibration = vib;
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _saveNotificationPrefs() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('settings_notif_enable_all', _enableAll);
-      await prefs.setBool('settings_notif_general', _generalNotifications);
-      await prefs.setBool('settings_notif_energy_tips', _energyTips);
-      await prefs.setBool('settings_notif_dnd', _doNotDisturb);
-      await prefs.setBool('settings_notif_vibration', _vibration);
-    } catch (_) {}
-  }
-
-  void _setAll(bool v) {
-    setState(() {
-      _enableAll = v;
-      _generalNotifications = v;
-      _energyTips = v;
-      _doNotDisturb = v;
-      _vibration = v;
-    });
-    _saveNotificationPrefs();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Notification Settings'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: const Color(0xFFF2FBF0),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top large pill with toggle
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [BoxShadow(color: Colors.black12.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2))],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text('Enable All Notifications', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
-                      Switch.adaptive(value: _enableAll, onChanged: (v) => _setAll(v)),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // General section header
-                const Text('General', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                const Text('Notification Types', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 8),
-
-                // Card with notification types
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: const Text('General Notifications'),
-                        trailing: Switch.adaptive(value: _generalNotifications, onChanged: (v) {
-                          setState(() => _generalNotifications = v);
-                          _saveNotificationPrefs();
-                        }),
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        title: const Text('Energy Saving Tips', style: TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: const Text('Recommended to keep on Promotional. Recommended', style: TextStyle(color: Colors.black45, fontSize: 12)),
-                        trailing: Switch.adaptive(value: _energyTips, onChanged: (v) {
-                          setState(() => _energyTips = v);
-                          _saveNotificationPrefs();
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // Common Settings
-                const Text('Common Settings', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.nights_stay, color: Colors.green),
-                        title: const Text('Do Not Disturb Mode'),
-                        trailing: Switch.adaptive(value: _doNotDisturb, onChanged: (v) {
-                          setState(() => _doNotDisturb = v);
-                          _saveNotificationPrefs();
-                        }),
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.vibration, color: Colors.black54),
-                        title: const Text('Notification Vibration'),
-                        trailing: Switch.adaptive(value: _vibration, onChanged: (v) {
-                          setState(() => _vibration = v);
-                          _saveNotificationPrefs();
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationsPageState extends State<NotificationsPage> {
-  // sample notifications; in a real app these would come from a backend or local DB
-  final List<Map<String, dynamic>> _items = [
-    {'id': '1', 'title': 'Welcome to Eco Plug', 'body': 'Learn how to save energy with simple steps.', 'time': '2h', 'read': false},
-    {'id': '2', 'title': 'Schedule Active', 'body': 'Your schedule for Blender is active at 08:00.', 'time': '1d', 'read': false},
-    {'id': '3', 'title': 'Weekly Report', 'body': 'Your electricity usage decreased by 12% this week.', 'time': '3d', 'read': true},
-  ];
-
-  void _markRead(int idx) {
-    setState(() => _items[idx]['read'] = true);
-  }
-
-  void _toggleRead(int idx) {
-    setState(() => _items[idx]['read'] = !_items[idx]['read']);
-  }
-
-  void _removeItem(String id) {
-    setState(() => _items.removeWhere((e) => e['id'] == id));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: _items.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.notifications_none, size: 72, color: Colors.black26),
-                    const SizedBox(height: 12),
-                    const Text('No notifications', style: TextStyle(color: Colors.black54)),
-                  ],
-                ),
-              )
-            : ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _items.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (ctx, i) {
-                  final it = _items[i];
-                  final read = it['read'] as bool? ?? false;
-                  return Dismissible(
-                    key: ValueKey(it['id']),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    onDismissed: (_) => _removeItem(it['id'].toString()),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: read ? Colors.grey[200] : Colors.green[100],
-                        child: Icon(Icons.notifications, color: read ? Colors.grey : Colors.green),
-                      ),
-                      title: Text(it['title'].toString(), style: TextStyle(fontWeight: FontWeight.w600, color: read ? Colors.black54 : Colors.black)),
-                      subtitle: Text(it['body'].toString(), maxLines: 2, overflow: TextOverflow.ellipsis),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(it['time'].toString(), style: const TextStyle(color: Colors.black45, fontSize: 12)),
-                          const SizedBox(height: 6),
-                          GestureDetector(
-                            onTap: () => _toggleRead(i),
-                            child: Icon(read ? Icons.mark_email_read : Icons.mark_email_unread, size: 18, color: read ? Colors.green : Colors.black45),
-                          ),
-                        ],
-                      ),
-                      onTap: () {
-                        // open detail (for now, mark read and show simple dialog)
-                        _markRead(i);
-                        showDialog<void>(context: context, builder: (dctx) {
-                          return AlertDialog(
-                            title: Text(it['title'].toString()),
-                            content: Text(it['body'].toString()),
-                            actions: [TextButton(onPressed: () => Navigator.of(dctx).pop(), child: const Text('Close'))],
-                          );
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-      ),
-    );
-  }
-}
+// NotificationsPage is provided in `lib/notifications_page.dart`.
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -3020,277 +1810,6 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-class NetZeroPage extends StatelessWidget {
-  const NetZeroPage({Key? key}) : super(key: key);
-
-  static const String _bodyText = '''Net Zero refers to the goal of reducing greenhouse gas emissions to zero by 2050. This ambitious target is essential to preventing the worst effects of climate change and limiting global warming to 1.5°C above pre-industrial levels. Achieving Net Zero requires a combination of reducing emissions and actively removing carbon from the atmosphere.
-
-One of the primary strategies for reaching Net Zero is transitioning to renewable energy sources such as solar, wind, and hydroelectric power. These alternatives to fossil fuels help minimize carbon emissions while promoting sustainable energy consumption. Additionally, advances in carbon capture and storage technologies play a crucial role in removing existing greenhouse gases from the atmosphere, ensuring a cleaner environment. Governments and organizations worldwide have recognized the urgency of this goal, implementing policies and initiatives to drive progress. International agreements like the Paris Agreement have set clear objectives for emission reductions, urging countries to adopt sustainable practices. Businesses are also taking significant steps by committing to carbon neutrality, investing in green technologies, and enhancing energy efficiency in operations.
-
-Despite these efforts, achieving Net Zero presents numerous challenges, including economic costs, technological limitations, and political obstacles. However, the transition also brings opportunities, such as the growth of green industries, job creation, and improved public health due to reduced air pollution. The shift toward sustainability requires collective action, fostering innovation and collaboration across various sectors. Individuals also play a vital role in contributing to Net Zero. Small lifestyle changes, such as using energy-efficient appliances, reducing waste, and advocating for climate-friendly policies, can have a meaningful impact. By making conscious choices and supporting sustainability efforts, individuals can help shape a greener future.
-
-Reaching Net Zero by 2050 is a complex yet necessary endeavor. While challenges exist, global cooperation, technological advancements, and a commitment to sustainability can pave the way for a cleaner and healthier planet. Everyone—governments, businesses, and individuals—must take responsibility in ensuring that future generations inherit a world free from the devastating consequences of climate change.''';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Net Zero'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // top rounded image (use existing asset as fallback)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[100]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/images/a.png',
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 220,
-                        color: Colors.green[50],
-                        child: const Center(child: Icon(Icons.bedtime, size: 56, color: Colors.green)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                Center(child: Text('Net Zero', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87))),
-                const SizedBox(height: 12),
-
-                SelectableText(
-                  _bodyText,
-                  style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87),
-                  textAlign: TextAlign.start,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class EcoPlugPage extends StatelessWidget {
-  const EcoPlugPage({Key? key}) : super(key: key);
-
-  static const String _bodyText = '''Eco Plug is an AI-powered app that helps you manage your home’s energy use more efficiently. It controls devices automatically and offers real-time energy data and savings tips.
-
-Eco Plug is designed to enhance energy efficiency and reduce carbon emissions through AI-driven automation. It monitors real-time power usage, provides energy reports, and optimizes consumption by learning user habits.
-
-With remote control via a mobile app or voice assistants, users can schedule appliances and reduce unnecessary power waste. Safety alerts detect abnormal usage, while a built-in carbon footprint tracker converts energy use into CO₂ emissions and offers eco-friendly recommendations.
-
-By integrating smart energy solutions into daily life, Eco Plug makes sustainability effortless while helping users lower their environmental impact.''';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Eco Plug'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // top rounded image (use existing asset as fallback)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[100]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/images/b.png',
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 220,
-                        color: Colors.green[50],
-                        child: const Center(child: Icon(Icons.bedtime, size: 56, color: Colors.green)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                Center(child: Text('Eco Plug', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87))),
-                const SizedBox(height: 12),
-
-                SelectableText(
-                  _bodyText,
-                  style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87),
-                  textAlign: TextAlign.start,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class TipsPage extends StatelessWidget {
-  const TipsPage({Key? key}) : super(key: key);
-
-  static const String _bodyText = '''Tips for Saving Power:
-●Use Smart Plugs to Manage Energy Consumption: Install AI-driven smart plugs like Eco Plug to automate the management of your household appliances and avoid unnecessary energy use.
-●Optimize Energy Efficiency at Home: Set your smart plugs to turn off unused devices, particularly those that consume power in standby mode.
-●Choose Energy-Saving Appliances: Replace old, inefficient devices with energy-efficient ones that work seamlessly with your smart plug, reducing your energy consumption even further.
-●Educate and Share: Spread the word about the benefits of smart plugs and energy-saving solutions within your community, helping others contribute to the Net Zero goal.
-●Advocate for Smart Energy Solutions: Support policies that promote the adoption of AI and energy-saving technologies in households, businesses, and governments.''';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Tips & Tricks'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // top rounded image (use existing asset as fallback)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[100]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/images/d.png',
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 220,
-                        color: Colors.green[50],
-                        child: const Center(child: Icon(Icons.bedtime, size: 56, color: Colors.green)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                Center(child: Text('Tips & Tricks', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87))),
-                const SizedBox(height: 12),
-
-                SelectableText(
-                  _bodyText,
-                  style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87),
-                  textAlign: TextAlign.start,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class LearnPage extends StatelessWidget {
-  const LearnPage({Key? key}) : super(key: key);
-
-  static const String _bodyText = '''Eco Plug helps users monitor, control, and optimize their electricity usage with real-time power tracking, AI-based energy optimization, and remote access. Here’s how it makes energy efficiency effortless:
-●Reducing Wasted Energy: Many devices consume power even when switched off. Eco Plug detects and eliminates unnecessary standby energy use.
-●Lowering Carbon Emissions: The plug converts electricity usage into CO₂ emissions, helping users track their environmental impact.
-●Enhancing Energy Efficiency: AI analyzes usage patterns and suggests energy-saving habits, ensuring optimal power management.
-●Remote Control for Convenience: Users can control appliances anytime, anywhere through a mobile app or voice assistants.
-●By integrating these smart energy-saving features into daily life, Eco Plug empowers users to make sustainable choices with ease.''';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Learn How You Can Help'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // top rounded image (use existing asset as fallback)
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), color: Colors.grey[100]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/images/c.png',
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 220,
-                        color: Colors.green[50],
-                        child: const Center(child: Icon(Icons.bedtime, size: 56, color: Colors.green)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                Center(child: Text('Learn How You Can Help', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87))),
-                const SizedBox(height: 12),
-
-                SelectableText(
-                  _bodyText,
-                  style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87),
-                  textAlign: TextAlign.start,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
 
@@ -3299,74 +1818,71 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // canonical storage: keep electricity goal in kWh internally
-  double _electricityGoalKwh = 10.0;
-  String electricityUnit = 'W'; // 'kWh' or 'W' (display)
-  double runtimeGoal = 0.0;
+  double _electricityGoal = 10.0; // editable between 0.1 - 20.0 per UI note
+  String _electricityUnit = 'W'; // 'W' or 'kWh'
 
-  void _saveAndClose() {
-    // persist canonical kWh value and unit for display, then pop
-    () async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setDouble('settings_electricity_goal_kwh', _electricityGoalKwh);
-        await prefs.setString('settings_electricity_unit', electricityUnit);
-        await prefs.setDouble('settings_runtime_goal', runtimeGoal);
-      } catch (_) {}
-      Navigator.of(context).pop({'electricityGoalKwh': _electricityGoalKwh, 'electricityUnit': electricityUnit, 'runtimeGoal': runtimeGoal});
-    }();
-  }
+  double _runtimeGoal = 0.0;
+  String _runtimeUnit = 'Hours';
+
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    () async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        // migration: if legacy key exists, convert to canonical kWh
-        final oldVal = prefs.getDouble('settings_electricity_goal');
-        final oldUnit = prefs.getString('settings_electricity_unit');
-        final storedKwh = prefs.getDouble('settings_electricity_goal_kwh');
-        final eu = prefs.getString('settings_electricity_unit');
-        final rt = prefs.getDouble('settings_runtime_goal');
-
-        double loadedKwh = _electricityGoalKwh;
-        if (storedKwh != null) {
-          loadedKwh = storedKwh;
-        } else if (oldVal != null) {
-          if (oldUnit == 'W') {
-            loadedKwh = oldVal / 1000.0;
-          } else {
-            loadedKwh = oldVal;
-          }
-        }
-
-        setState(() {
-          _electricityGoalKwh = loadedKwh;
-          if (eu != null) electricityUnit = eu;
-          if (rt != null) runtimeGoal = rt;
-        });
-      } catch (_) {}
-    }();
+    _loadPrefs();
   }
 
-  void _convertElectricityGoalTo(String newUnit) {
-    // Keep canonical kWh value; switching unit only changes display
-    if (newUnit == electricityUnit) return;
-    setState(() => electricityUnit = newUnit);
+  Future<void> _loadPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _electricityGoal = prefs.getDouble('goal_electricity_value') ?? 10.0;
+        _electricityUnit = prefs.getString('goal_electricity_unit') ?? 'W';
+        _runtimeGoal = prefs.getDouble('goal_runtime_value') ?? 0.0;
+        _runtimeUnit = prefs.getString('goal_runtime_unit') ?? 'Hours';
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _savePrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('goal_electricity_value', _electricityGoal);
+      await prefs.setString('goal_electricity_unit', _electricityUnit);
+      await prefs.setDouble('goal_runtime_value', _runtimeGoal);
+      await prefs.setString('goal_runtime_unit', _runtimeUnit);
+    } catch (_) {}
+  }
+
+  // Basic conversion between units. Note: this is a simple multiplier (1 kWh <-> 1000 W)
+  double _convertElectricity(double value, String from, String to) {
+    if (from == to) return value;
+    if (from == 'kWh' && to == 'W') return value * 1000.0;
+    if (from == 'W' && to == 'kWh') return value / 1000.0;
+    return value;
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
         title: const Text('Settings'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          TextButton(onPressed: _saveAndClose, child: const Text('Save', style: TextStyle(color: Colors.green))),
+          TextButton(
+            onPressed: () async {
+              await _savePrefs();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save', style: TextStyle(color: Colors.green)),
+          ),
         ],
       ),
       backgroundColor: const Color(0xFFF6FBF4),
@@ -3377,114 +1893,75 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
-                const Text('Electricity Goal', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Builder(builder: (_) {
-                        final display = (electricityUnit == 'kWh') ? _electricityGoalKwh : (_electricityGoalKwh * 1000.0);
-                        return Text(display.toStringAsFixed(1), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800));
-                      }),
-                    ),
-                    DropdownButton<String>(
-                      value: electricityUnit,
-                      items: const [DropdownMenuItem(value: 'kWh', child: Text('kWh')), DropdownMenuItem(value: 'W', child: Text('W'))],
-                      onChanged: (v) => _convertElectricityGoalTo(v ?? electricityUnit),
-                    ),
-                  ],
-                ),
-                Builder(builder: (_) {
-                  final display = (electricityUnit == 'kWh') ? _electricityGoalKwh : (_electricityGoalKwh * 1000.0);
-                  final min = (electricityUnit == 'kWh') ? 0.1 : 0.1 * 1000.0;
-                  final max = (electricityUnit == 'kWh') ? 20.0 : 20.0 * 1000.0;
-                  return Slider.adaptive(
-                    value: display.clamp(min, max),
-                    min: min,
-                    max: max,
-                    onChanged: (v) => setState(() {
-                      _electricityGoalKwh = (electricityUnit == 'kWh') ? v : (v / 1000.0);
-                    }),
-                  );
-                }),
-                const SizedBox(height: 8),
-                const Text('Electricity Units', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _convertElectricityGoalTo('kWh'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: electricityUnit == 'kWh' ? Colors.green : Colors.grey.shade300),
+                // Electricity Goal card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Electricity Goal', style: TextStyle(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(_electricityGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                          const SizedBox(width: 8),
+                          DropdownButton<String>(
+                            value: _electricityUnit,
+                            items: const [DropdownMenuItem(value: 'W', child: Text('W')), DropdownMenuItem(value: 'kWh', child: Text('kWh'))],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                // convert displayed value between units
+                                _electricityGoal = _convertElectricity(_electricityGoal, _electricityUnit, v);
+                                // clamp to allowed editable range 0.1..20.0
+                                _electricityGoal = _electricityGoal.clamp(0.1, 20.0);
+                                _electricityUnit = v;
+                              });
+                            },
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [Text('kWh', style: TextStyle(fontWeight: FontWeight.w600)), SizedBox(height: 6), Text('kilowatt-hour', style: TextStyle(color: Colors.black54))],
-                                ),
-                              ),
-                              Icon(electricityUnit == 'kWh' ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: electricityUnit == 'kWh' ? Colors.green : Colors.black26),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => _convertElectricityGoalTo('W'),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: electricityUnit == 'W' ? Colors.green : Colors.grey.shade300),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [Text('W', style: TextStyle(fontWeight: FontWeight.w600)), SizedBox(height: 6), Text('Watt', style: TextStyle(color: Colors.black54))],
-                                ),
-                              ),
-                              Icon(electricityUnit == 'W' ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: electricityUnit == 'W' ? Colors.green : Colors.black26),
-                            ],
-                          ),
-                        ),
+                      Slider(
+                        min: 0.1,
+                        max: 20.0,
+                        value: _electricityGoal.clamp(0.1, 20.0),
+                        onChanged: (v) => setState(() => _electricityGoal = v),
+                        activeColor: Colors.green,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 20),
-                const Text('Runtime Goal', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: Text(runtimeGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700))),
-                    const SizedBox(width: 8),
-                    const Text('Hours', style: TextStyle(color: Colors.black54)),
-                  ],
+                const SizedBox(height: 16),
+
+                // Runtime Goal card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Runtime Goal', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Row(children: [Text(_runtimeGoal.toStringAsFixed(1), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)), const SizedBox(width: 8), const Text('Hours')]),
+                    Slider(min: 0.0, max: 24.0, value: _runtimeGoal.clamp(0.0, 24.0), onChanged: (v) => setState(() => _runtimeGoal = v), activeColor: Colors.green),
+                    const SizedBox(height: 8),
+                    const Text('Runtime Units', style: TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 6),
+                    Text(_runtimeUnit, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ]),
                 ),
-                Slider.adaptive(value: runtimeGoal, min: 0.0, max: 24.0, divisions: 24, onChanged: (v) => setState(() => runtimeGoal = v)),
+
                 const SizedBox(height: 8),
-                const Text('Runtime Units', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 28),
-                const Text(
-                  'Note: Electricity goal is edited as a value between 0.1 and 20.0.\nWhen switching units the displayed number will convert (kWh ⇄ W). 0.0 is not allowed.',
-                  style: TextStyle(color: Colors.black54, fontSize: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Text(
+                    'Note: Electricity goal is edited as a value between 0.1 and 20.0. When switching units the displayed number will convert (kWh ⇄ W). 0.0 is not allowed.',
+                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
                 ),
-                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -3555,220 +2032,214 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
-// Simple Recommendations page
-class RecommendationsPage extends StatelessWidget {
-  const RecommendationsPage({Key? key}) : super(key: key);
+// Carbon Emission page — template matching the screenshot
+class CarbonEmissionPage extends StatelessWidget {
+  const CarbonEmissionPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Recommendations'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
+        leading: const BackButton(color: Colors.black),
+        centerTitle: true,
+        title: const Text('Carbon Emission', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
       ),
-      backgroundColor: Colors.white,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: const [
-            ListTile(
-              leading: Icon(Icons.lightbulb_outline, color: Colors.green),
-              title: Text('Unplug idle devices'),
-              subtitle: Text('Reduce standby power by unplugging or using smart strips.'),
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.schedule, color: Colors.orange),
-              title: Text('Schedule heavy appliances'),
-              subtitle: Text('Shift dishwasher or washing machine to off-peak hours.'),
-            ),
-            Divider(),
-            ListTile(
-              leading: Icon(Icons.emoji_events, color: Colors.blue),
-              title: Text('Set daily goals'),
-              subtitle: Text('Aim to reduce daily consumption by 10% this week.'),
-            ),
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row: Today value (left) and illustration (right)
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Today', style: TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.w600)),
+                        SizedBox(height: 8),
+                        Text('Power (kWh)', style: TextStyle(fontSize: 13, color: Colors.black45)),
+                        SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('100', style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold)),
+                            SizedBox(width: 8),
+                            Text('kWh', style: TextStyle(fontSize: 18, color: Colors.black54)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // Illustration on the right (asset fallback)
+                  SizedBox(
+                    width: 160,
+                    height: 110,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/images/solar_house.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey[50],
+                          child: const Center(child: Icon(Icons.house, size: 64, color: Colors.green)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // heading
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text('If you reach this target:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87)),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Stats grid
+              GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                // remove spacing between the four stat boxes as requested
+                crossAxisSpacing: 0,
+                mainAxisSpacing: 0,
+                // make each tile taller to avoid vertical overflow on small screens
+                childAspectRatio: 1.6,
+                children: [
+                  _statTile('72', 'kWh', 'Energy saved\nper month'),
+                  _statTile('30.24', 'kg', 'CO2 saved\nper month'),
+                  _statTile('1.5', 'trees', 'Equivalent to\nplanting'),
+                  _statTile('3.29', 'hours', 'Equivalent of\ndriving'),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Material(
+                elevation: 0,
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DevicePowerStatisticsPage(deviceName: 'Home'))),
+                  child: Container(
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
+                    child: const ListTile(
+                      title: Text('Information'),
+                      trailing: Icon(Icons.chevron_right),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-// helper tile used by CarbonEmissionPage
-Widget _metricTile({required String value, required String unit, required String label}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-            const SizedBox(width: 6),
-            Text(unit, style: const TextStyle(color: Colors.black54)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-      ],
-    ),
-  );
-}
-
-class CarbonEmissionPage extends StatelessWidget {
-  final String deviceName;
-  final double watts;
-  const CarbonEmissionPage({Key? key, required this.deviceName, required this.watts}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    // Interpret incoming `watts` as a kWh-like display value for the template.
-    final displayKwh = watts; // caller may pass kWh already (e.g., 100)
-
-    // Example derived metrics (placeholders) based on displayKwh
-    final energySavedPerMonth = (displayKwh * 0.72);
-    final co2SavedKg = (energySavedPerMonth * 0.42); // sample conversion
-    final trees = (energySavedPerMonth / 50.0); // arbitrary equivalence
-    final drivingHours = (energySavedPerMonth / 30.0);
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Carbon Emission'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+  Widget _statTile(String value, String unit, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))]),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 6),
-                const Text('Today', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 12),
-
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // left: label + big value
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Power (kWh)', style: TextStyle(color: Colors.black54)),
-                          const SizedBox(height: 6),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text('${displayKwh.toStringAsFixed(0)}', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900)),
-                              const SizedBox(width: 8),
-                              Text('kWh', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.black54)),
-                            ],
-                          ),
-                        ],
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       ),
                     ),
-
-                    const SizedBox(width: 12),
-
-                    // right: image
-                    Expanded(
-                      flex: 6,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          height: 140,
-                          color: Colors.grey[50],
-                          child: Image.asset(
-                            'assets/images/eco_house.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.nature, size: 64, color: Colors.green)),
-                          ),
-                        ),
-                      ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(unit, style: const TextStyle(color: Colors.black54, fontSize: 12)),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 18),
-                const Divider(),
-                const SizedBox(height: 14),
-
-                const Text('If you reach this target:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 12),
-
-                // metrics grid (2x2)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: _metricTile(value: '${energySavedPerMonth.toStringAsFixed(0)}', unit: 'kWh', label: 'Energy saved per month')),
-                          const SizedBox(width: 12),
-                          Expanded(child: _metricTile(value: '${co2SavedKg.toStringAsFixed(2)}', unit: 'kg', label: 'CO2 saved per month')),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: _metricTile(value: '${trees.toStringAsFixed(1)}', unit: 'trees', label: 'Equivalent to planting')),
-                          const SizedBox(width: 12),
-                          Expanded(child: _metricTile(value: '${drivingHours.toStringAsFixed(2)}', unit: 'hours', label: 'Equivalent of driving')),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    title: const Text('Information'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DevicePowerStatisticsPage(deviceName: deviceName))),
-                  ),
-                ),
-
-                // bottom handle removed per request
+                const SizedBox(height: 6),
+                Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 class _HistoryPageState extends State<HistoryPage> {
-  // sample months and sample data
-  final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  int selectedMonthIndex = 5; // June as default
+  String _unit = 'kWh';
+  bool _loading = true;
+  // selected month (1..12). initialize to current month so the UI highlights correctly
+  int _selectedMonth = DateTime.now().month;
 
-  // sample history entries (kWh, hours, day)
-  final List<Map<String,dynamic>> entries = [
-    {'kwh': 9.0, 'hours': 6.0, 'day': '20th'},
-    {'kwh': 9.0, 'hours': 6.0, 'day': '29th'},
-    {'kwh': 6.0, 'hours': 7.8, 'day': '25th'},
-    {'kwh': 7.0, 'hours': 7.0, 'day': '23th'},
-    {'kwh': 6.0, 'hours': 7.0, 'day': '21th'},
+  // sample entries now include a 'month' field (1..12) so we can filter by selected month.
+  // In real usage, persist or load month along with the record when saving goals data.
+  final List<Map<String, dynamic>> _entries = [
+    {'kwh': 9.0, 'hours': 6.0, 'label': '3rd', 'month': 12},
+    {'kwh': 9.0, 'hours': 6.0, 'label': '2nd', 'month': 12},
+    {'kwh': 6.0, 'hours': 7.8, 'label': '25th', 'month': 11},
+    {'kwh': 7.0, 'hours': 7.0, 'label': '23th', 'month': 10},
+    {'kwh': 6.0, 'hours': 7.0, 'label': '21th', 'month': 9},
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadUnit();
+  }
+
+  Future<void> _loadUnit() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString('goal_electricity_unit') ?? 'W';
+      setState(() {
+        _unit = (stored == 'W') ? 'W' : 'kWh';
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
+
+  double _toDisplay(double kwh) => (_unit == 'W') ? kwh * 1000.0 : kwh;
+
+  @override
   Widget build(BuildContext context) {
-    final hasData = entries.isNotEmpty;
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+    // filter entries according to the selected month; if none found, show an empty list
+    final filteredEntries = _entries.where((e) => (e['month'] ?? _selectedMonth) == _selectedMonth).toList();
+
+    final maxKwh = (filteredEntries.isNotEmpty
+        ? (filteredEntries.map((e) => e['kwh'] as double).fold<double>(0.0, (a, b) => a > b ? a : b))
+        : 1.0)
+      .clamp(1.0, double.infinity);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
@@ -3780,60 +2251,68 @@ class _HistoryPageState extends State<HistoryPage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            // months header (simple scrollable row) with selectable months
             SizedBox(
               height: 48,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: ListView(
                 scrollDirection: Axis.horizontal,
-                itemBuilder: (ctx, i) {
-                  final sel = i == selectedMonthIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => selectedMonthIndex = i),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: sel ? Colors.black : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  for (var idx = 0; idx < 12; idx++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 6.0),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedMonth = idx + 1),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                          decoration: BoxDecoration(
+                            color: (_selectedMonth == idx + 1) ? Colors.green.shade700 : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][idx],
+                            style: TextStyle(
+                              color: (_selectedMonth == idx + 1) ? Colors.white : Colors.black54,
+                              fontWeight: (_selectedMonth == idx + 1) ? FontWeight.w700 : FontWeight.normal,
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Center(child: Text(months[i], style: TextStyle(color: sel ? Colors.white : Colors.black))),
                     ),
-                  );
-                },
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemCount: months.length,
+                ],
               ),
             ),
-            const SizedBox(height: 24),
+            const Divider(height: 1),
             Expanded(
-              child: hasData ? ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: entries.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 18),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(12),
+                itemCount: filteredEntries.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (ctx, i) {
-                  final e = entries[i];
-                  final kwh = e['kwh'] as double;
-                  final hours = e['hours'] as double;
-                  final day = e['day'] as String;
-                  // progress relative to a goal sample (use 12 kWh as full)
-                  final prog = (kwh / 12.0).clamp(0.0, 1.0);
+                  final row = filteredEntries[i];
+                  final kwh = row['kwh'] as double;
+                  final hours = row['hours'] as double;
+                  final label = row['label'] as String;
+                  final displayKwh = _toDisplay(kwh);
+                  final pct = (kwh / maxKwh).clamp(0.0, 1.0);
+
                   return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // left value
+                      // left big kWh
                       SizedBox(
-                        width: 72,
+                        width: 76,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(kwh.toStringAsFixed(1), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                            Text(displayKwh.toStringAsFixed(1), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 4),
-                            const Text('kWh', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                            Text(_unit, style: const TextStyle(color: Colors.black54)),
                           ],
                         ),
                       ),
+
+                      const SizedBox(width: 12),
 
                       // middle progress bar
                       Expanded(
@@ -3842,44 +2321,37 @@ class _HistoryPageState extends State<HistoryPage> {
                           children: [
                             Stack(
                               children: [
-                                Container(height: 18, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8))),
-                                FractionallySizedBox(widthFactor: prog, child: Container(height: 18, decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)))),
+                                Container(
+                                  height: 18,
+                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: Colors.grey[200]),
+                                ),
+                                FractionallySizedBox(
+                                  widthFactor: pct,
+                                  child: Container(height: 18, decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: Colors.black87)),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 6),
+                            Text(label, style: const TextStyle(color: Colors.black38, fontSize: 12)),
                           ],
                         ),
                       ),
 
-                      // right hours and day
+                      const SizedBox(width: 12),
+
+                      // right hours
                       SizedBox(
-                        width: 96,
+                        width: 90,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('${hours.toStringAsFixed(1)} hours', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 8),
-                            Text(day, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                            Text('${hours.toStringAsFixed(1)} hours', style: const TextStyle(fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
                     ],
                   );
                 },
-              ) : Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.grey[100]),
-                      child: const Center(child: Icon(Icons.history, size: 64, color: Colors.black26)),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('No data for this month', style: TextStyle(color: Colors.black54)),
-                  ],
-                ),
               ),
             ),
           ],
@@ -3888,35 +2360,3 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 }
-
-class CarbonInformationPage extends StatelessWidget {
-  const CarbonInformationPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
-        title: const Text('Information'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Carbon Emission Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-              SizedBox(height: 12),
-              Text('Details coming soon. You can replace this placeholder with the full information screen content when ready.', style: TextStyle(color: Colors.black87)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-

@@ -99,95 +99,53 @@ class _SetNamePageState extends State<SetNamePage> {
 
                 const SizedBox(height: 18),
 
-                // Name (label + input)
+                // Name
                 _roundedField(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 96,
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: const Text('Name', style: TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _nameCtrl,
-                            decoration: const InputDecoration(
-                              hintText: 'Set name',
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: TextField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Name',
+                      border: InputBorder.none,
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 12),
 
-                // Gender (label + dropdown) — match Name height
+                // Gender dropdown
                 _roundedField(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 96,
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: const Text('Gender', style: TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: SizedBox(
-                            height: 48,
-                            child: DropdownButtonFormField<String>(
-                              value: _gender,
-                              decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12)),
-                              hint: const Text('Select', style: TextStyle(color: Colors.black54)),
-                              items: const [
-                                DropdownMenuItem(value: 'male', child: Text('Male')),
-                                DropdownMenuItem(value: 'female', child: Text('Female')),
-                                DropdownMenuItem(value: 'other', child: Text('Other')),
-                              ],
-                              onChanged: (v) => setState(() => _gender = v),
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: DropdownButtonFormField<String>(
+                    value: _gender,
+                    decoration: const InputDecoration(border: InputBorder.none),
+                    hint: const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Text('Gender', style: TextStyle(color: Colors.black54)),
                     ),
+                    items: const [
+                      DropdownMenuItem(value: 'male', child: Text('Male')),
+                      DropdownMenuItem(value: 'female', child: Text('Female')),
+                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                    ],
+                    onChanged: (v) => setState(() => _gender = v),
                   ),
                 ),
 
                 const SizedBox(height: 12),
 
-                // Birthday (label + picker)
+                // Birthday
                 _roundedField(
                   child: InkWell(
                     onTap: _pickBirthday,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                      padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 6.0),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            width: 96,
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: const Text('Birthday', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            _birthday == null ? 'Birthday' : '${_birthday!.year}-${_birthday!.month.toString().padLeft(2, '0')}-${_birthday!.day.toString().padLeft(2, '0')}',
+                            style: TextStyle(color: _birthday == null ? Colors.black54 : Colors.black87),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _birthday == null ? 'Select date' : '${_birthday!.year}-${_birthday!.month.toString().padLeft(2, '0')}-${_birthday!.day.toString().padLeft(2, '0')}',
-                                  style: TextStyle(color: _birthday == null ? Colors.black54 : Colors.black87),
-                                ),
-                                const Icon(Icons.calendar_today_outlined, color: Colors.black54),
-                              ],
-                            ),
-                          ),
+                          const Icon(Icons.calendar_today_outlined, color: Colors.black54),
                         ],
                       ),
                     ),
@@ -196,28 +154,13 @@ class _SetNamePageState extends State<SetNamePage> {
 
                 const SizedBox(height: 12),
 
-                // Location (label + input)
+                // Location
                 _roundedField(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 96,
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: const Text('Location', style: TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _locationCtrl,
-                            decoration: const InputDecoration(
-                              hintText: 'Enter location',
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ],
+                  child: TextField(
+                    controller: _locationCtrl,
+                    decoration: const InputDecoration(
+                      hintText: 'Location',
+                      border: InputBorder.none,
                     ),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'set_name_page.dart';
 
 class UserProfilePage extends StatefulWidget {
@@ -27,8 +28,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final gender = prefs.getString('profile_gender');
     final birthdayStr = prefs.getString('profile_birthday');
     final location = prefs.getString('profile_location');
+    // If no explicit profile name saved, fall back to account name from sign-up
+    String? fallbackName;
+    try {
+      final acct = prefs.getString('account');
+      if (acct != null) {
+        final m = jsonDecode(acct) as Map<String, dynamic>;
+        final n = (m['name'] as String?)?.trim();
+        if (n != null && n.isNotEmpty) fallbackName = n;
+      }
+    } catch (_) {}
     setState(() {
-      _name = name;
+      _name = name ?? fallbackName;
       _gender = gender;
       if (birthdayStr != null) {
         try {
@@ -124,6 +135,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(_name ?? 'Set name', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                Text(_location ?? 'Tap to edit', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
                               ],
                             ),
                           ),
